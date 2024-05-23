@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import durationCalculator from '../../Functions/durationCalculator';
 import { CiHeart } from "react-icons/ci";
+import fetchSongUrl from '../../Functions/fetchSongUrl';
 
 
 type songType = {
@@ -41,7 +42,7 @@ const Songs = () => {
       <div className='w-full h-[18rem] flex flex-col gap-2 mt-[1rem]'>
         {
           songsList.map((item, index)=>{
-            if(index){
+            if(index<5){
               return(
                 <SongTemplate key={index} song={item}/>
               )
@@ -56,17 +57,6 @@ const Songs = () => {
 const SongTemplate: React.FC<{ song: songType}> = ({ song }) => {
 
   const dispatch = useDispatch();
-  
-  const fetchSongUrl = async (songName:String) => {
-    try {
-      const response = await httpClient.get(`/song/${songName}`);
-      const url = response.data.url;
-      console.log(url);
-      return url;
-    } catch (error) {
-      console.error('Error fetching song URL:', error);
-    }
-  }
   
   const playSong = async () => {
     
@@ -85,7 +75,7 @@ const SongTemplate: React.FC<{ song: songType}> = ({ song }) => {
         id: song.songId,
         name: song.songName,
         artist: song.ArtistName,
-        mp3: await fetchSongUrl(song.songName),
+        mp3: await fetchSongUrl(song.songId),
       },
       songLength: song.duration,
     }));

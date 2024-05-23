@@ -5,9 +5,10 @@ import './fullScreenMusic.css'
 import SeekBar from '../Seekbar/SeekBar'
 import FullScreenControls from '../Controls/Full Screen Controls/FullScreenControls'
 import { useDispatch, useSelector } from 'react-redux'
-import { setMiniplayer, setMusicSeek, setSongInfo } from '../../Slices/musicPlayerSlice'
+import { setDuration, setMiniplayer, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice'
 import { setPlayIndex } from '../../Slices/musicQueueSlice'
 import { QueueState, musicPlayerState } from '../../Types/types'
+import fetchSongUrl from '../../Functions/fetchSongUrl'
 
 const FullScreenMusic = () => {
 
@@ -15,16 +16,32 @@ const FullScreenMusic = () => {
     const { miniplayer, song, duration, songLength } = useSelector((state:musicPlayerState) => state.musicPlayer);
     const {Queue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
 
-    const playFromQueue = (songIndex:number) => {
+    const playFromQueue = async(songIndex:number) => {
       dispatch(setPlayIndex(songIndex));
+
       dispatch(setSongInfo({
         song: {
+          id: Queue[songIndex].songId,
           name: Queue[songIndex].songName,
-          artist : Queue[songIndex].ArtistName
+          artist : Queue[songIndex].ArtistName,
+          mp3: null
         },
         songLength: Queue[songIndex].duration,
       }))
-      dispatch(setMusicSeek({seek:0}))
+
+      dispatch(setSongInfo({
+        song: {
+          id: Queue[songIndex].songId,
+          name: Queue[songIndex].songName,
+          artist : Queue[songIndex].ArtistName,
+          mp3: await fetchSongUrl(Queue[songIndex].songId),
+        },
+        songLength: Queue[songIndex].duration,
+      }))
+
+      dispatch(setPlay({play:true}));
+      dispatch(setMusicSeek({seek:0}));
+      dispatch(setDuration({duration:0}));
     }
 
     const seeker = (event:any) => {

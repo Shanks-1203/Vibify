@@ -6,10 +6,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { musicPlayerState } from '../Types/types';
 
 const HomeLayout = ({children}:{ children: React.ReactNode }) => {
-  
-  // const { duration } = useSelector((state:musicPlayerState) => state.musicPlayer);  
-
-  // const dispatch = useDispatch();
 
   return (
     <div className='bg-black w-full flex'>

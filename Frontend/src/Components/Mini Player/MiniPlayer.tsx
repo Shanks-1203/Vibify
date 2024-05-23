@@ -4,11 +4,12 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import MiniSeekbar from '../Seekbar/Mini Seekbar/MiniSeekbar';
 import MiniControls from '../Controls/Mini Controls/MiniControls';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDuration, setMiniplayer, setMusicSeek, setSongInfo } from '../../Slices/musicPlayerSlice';
+import { setDuration, setMiniplayer, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import { QueueState, musicPlayerState } from '../../Types/types';
 import { setPlayIndex } from '../../Slices/musicQueueSlice';
 import { CiHeart } from "react-icons/ci";
 import { MdOutlineLibraryAdd } from "react-icons/md";
+import fetchSongUrl from '../../Functions/fetchSongUrl';
 
 
 
@@ -19,18 +20,34 @@ const MiniPlayer = () => {
     const { miniplayer, duration, play, song, musicSeek, songLength } = useSelector((state:musicPlayerState) => state.musicPlayer);
     const audioRef = useRef<HTMLAudioElement>(null);
 
-    const playFromQueue = (songIndex:number) => {
+    const playFromQueue = async(songIndex:number) => {
         dispatch(setPlayIndex(songIndex));
+  
         dispatch(setSongInfo({
-            song: {
-                id: songIndex,
-                name: Queue[songIndex].songName,
-                artist : Queue[songIndex].ArtistName
-            },
-            songLength: Queue[songIndex].duration,
+          song: {
+            id: Queue[songIndex].songId,
+            name: Queue[songIndex].songName,
+            artist : Queue[songIndex].ArtistName,
+            mp3: null
+          },
+          songLength: Queue[songIndex].duration,
         }))
-        dispatch(setMusicSeek({seek:0}))
-    }
+  
+        dispatch(setSongInfo({
+          song: {
+            id: Queue[songIndex].songId,
+            name: Queue[songIndex].songName,
+            artist : Queue[songIndex].ArtistName,
+            mp3: await fetchSongUrl(Queue[songIndex].songId),
+          },
+          songLength: Queue[songIndex].duration,
+        }))
+  
+        dispatch(setPlay({play:true}));
+        dispatch(setMusicSeek({seek:0}));
+        dispatch(setDuration({duration:0}));
+  
+      }
 
     const prevButton = () => {
         if(duration>=5){
@@ -52,22 +69,28 @@ const MiniPlayer = () => {
     }
 
     useEffect(()=>{
-        if(duration===songLength && (playIndex < (Queue.length - 1))){
+        if(Math.floor(duration)===Math.floor(songLength) && (playIndex < (Queue.length - 1))){
             setTimeout(() => {
                 nextButton();
             }, 1000);
         }
+        else if(Math.floor(duration)===Math.floor(songLength)){
+            dispatch(setPlay({play:false}))
+            dispatch(setMusicSeek({seek:0}));
+            dispatch(setDuration({duration:0}));
+        }
     },[duration])
-
+    
+    
     useEffect(() => {
         if (!play) {
-          return;
+            return;
         }
-    
+
         const intervalId = setInterval(() => {
           dispatch(setDuration({ duration: duration + 1 }));
         }, 1000);
-    
+        
         return () => clearInterval(intervalId);
     }, [play, duration, dispatch]);
 

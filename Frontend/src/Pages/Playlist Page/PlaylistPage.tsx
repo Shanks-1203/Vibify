@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import httpClient from '../../httpClient';
 import { PiVinylRecord } from 'react-icons/pi';
 import PlaylistOptions from '../../Components/Playlist Options/PlaylistOptions';
@@ -6,14 +6,13 @@ import { IoMdMore } from "react-icons/io";
 import durationCalculator from '../../Functions/durationCalculator';
 import RelatedPlaylists from '../../Components/Related Playlists/RelatedPlaylists';
 import { useDispatch, useSelector } from 'react-redux';
-import MiniPlayer from '../../Components/Mini Player/MiniPlayer';
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
-import { setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
+import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import { addMusic, clearQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import { Song, musicPlayerState } from '../../Types/types';
 import CommonHeader from '../../Components/Header/CommonHeader';
 import { useLocation, useParams } from 'react-router-dom';
-import HomeLayout from '../../Layouts/HomeLayout';
+import fetchSongUrl from '../../Functions/fetchSongUrl';
 
 const PlaylistPage = () => {
 
@@ -22,16 +21,8 @@ const PlaylistPage = () => {
   const {playlistId} = useParams()
 
   const [songs, setSongs] = useState<Song[]>([])
-  const [seek, setSeek] = useState(0);
-  const [songTime, setSongTime] = useState('0:00');
-  const [currentSongTime, setCurrentSongTime] = useState('0:00');
-
-  const [currentLength, setCurrentLength] = useState(() => {
-    const durationString = typeof window !== 'undefined' ? window.sessionStorage?.getItem('duration') : null;
-    return parseInt(durationString ?? '0', 10);
-  });
   
-  const { songLength, song, miniplayer, play, musicSeek, duration } = useSelector((state:musicPlayerState) => state.musicPlayer);
+  const { miniplayer } = useSelector((state:musicPlayerState) => state.musicPlayer);
 
   const getSongs = async() => {
     try{
@@ -45,62 +36,10 @@ const PlaylistPage = () => {
   const location = useLocation();
 
   useEffect(()=>{
-    dispatch(setMusicSeek({seek:duration}))
     getSongs();
   },[location])
 
-  useEffect(()=>{
-    const minutes = Math.floor(songLength / 60);
-    const seconds = songLength - minutes * 60;
-
-    setSongTime(`${minutes}:${seconds<10 ? '0'+seconds : seconds}`);
-  },[songLength])
-
-  useEffect(()=>{
-    const minutes = Math.floor(currentLength / 60);
-    const seconds = currentLength - minutes * 60;
-
-    const secondString = parseInt(seconds.toString().split('.')[0]);
-
-    setCurrentSongTime(`${minutes}:${secondString<10 ? '0'+secondString : secondString}`);
-
-    setSeek(Math.floor((currentLength/songLength)*100))
-
-    sessionStorage.setItem('duration', Math.floor(currentLength).toString());
-  },[currentLength])
-
-  useEffect(() => {
-    if (!play) {
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      setCurrentLength((prev) => {
-        if (prev < songLength) {
-          return prev + 1;
-        } else {
-          clearInterval(intervalId);
-          return prev;
-        }
-      });
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [play, songLength]);
-
-  const fetchSongUrl = async (songName:String) => {
-    try {
-      const response = await httpClient.get(`/song/${songName}`);
-      const url = response.data.url;
-      console.log(url);
-      return url;
-    } catch (error) {
-      console.error('Error fetching song URL:', error);
-    }
-  }
-
   const playSong = async (item:{ArtistName: String, PlaylistId: number, PlaylistName: String, UserName: String, artistId: number, duration: number, songId: number, songName: String}) => {
-      setCurrentLength(0);
   
       dispatch(setSongInfo({
         song: {
@@ -117,12 +56,14 @@ const PlaylistPage = () => {
           id: item.songId,
           name: item.songName,
           artist: item.ArtistName,
-          mp3: await fetchSongUrl(item.songName),
+          mp3: await fetchSongUrl(item.songId),
         },
         songLength: item.duration,
       }));
   
       dispatch(setPlay({play:true}));
+      dispatch(setMusicSeek({seek:0}));
+      dispatch(setDuration({duration:0}));
   
       sessionStorage.setItem("songId", item?.songId?.toString());
   }
@@ -130,9 +71,12 @@ const PlaylistPage = () => {
   const playlistPlay = ( songNumber:number = 0 ) => {
     dispatch(clearQueue());
     playSong(songs[songNumber]);
-    dispatch(setPlayIndex(songNumber))
+    dispatch(setPlayIndex(0))
+    dispatch(addMusic(songs[songNumber]));
     songs.map((song:{ArtistName: String, PlaylistId: number, PlaylistName: String, UserName: String, artistId: number, duration: number, songId: number, songName: String}, index)=>{
-      dispatch(addMusic(song));
+      if(index!==songNumber){
+        dispatch(addMusic(song));
+      }
     })
   }
 

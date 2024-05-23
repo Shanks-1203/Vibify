@@ -1,16 +1,12 @@
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import Songs from '../../Components/Songs/Songs'
 import FeaturedPlaylists from '../../Components/Songs/Featured Playlists/FeaturedPlaylists'
 import PopularArtists from '../../Components/Songs/Popular Artists/PopularArtists'
-import MiniPlayer from '../../Components/Mini Player/MiniPlayer';
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic'
 import CommonHeader from '../../Components/Header/CommonHeader';
 import TrendingPlaylists from '../../Components/Top Charts/TrendingPlaylists';
 import AdvertisementBoard from '../../Components/Advertisement Board/AdvertisementBoard';
 import { musicPlayerState } from '../../Types/types';
-import { setMusicSeek } from '../../Slices/musicPlayerSlice';
-import HomeLayout from '../../Layouts/HomeLayout';
 
 const HomePage = () => {
 

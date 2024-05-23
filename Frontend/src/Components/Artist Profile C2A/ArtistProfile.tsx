@@ -1,8 +1,8 @@
-import React from 'react'
 import durationCalculator from '../../Functions/durationCalculator'
 import { useDispatch, useSelector } from 'react-redux'
-import { setSongInfo } from '../../Slices/musicPlayerSlice'
+import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice'
 import { PiVinylRecord } from 'react-icons/pi'
+import fetchSongUrl from '../../Functions/fetchSongUrl'
 
 export const ListenNowBtn = () => {
   return (
@@ -12,26 +12,35 @@ export const ListenNowBtn = () => {
   )
 }
 
-export const PopularSongs = ({songs, setCurrentLength}:{songs:{ ArtistId:number, ArtistName:String, FollowersCount: number, songId:number, songName:String, duration:number}[], setCurrentLength:Function}) => {
-
-    interface RootState {
-        musicPlayer: {
-          miniplayer:String
-        };
-      }
+export const PopularSongs = ({songs}:{songs:{ ArtistId:number, ArtistName:String, FollowersCount: number, songId:number, songName:String, duration:number}[]}) => {
     
-    const { miniplayer } = useSelector((state:RootState) => state.musicPlayer); 
     const dispatch = useDispatch()
 
-    const playSong = (item:{ArtistId: number, ArtistName: String, FollowersCount: number, duration: number, songId: number, songName: String}) => {  
-        setCurrentLength(0);
-        dispatch(setSongInfo({
-          song: {
-            name: item.songName,
-            artist: item.ArtistName,
-          },
-          songLength: item.duration,
-        }));
+    const playSong = async(item:{ArtistId: number, ArtistName: String, FollowersCount: number, duration: number, songId: number, songName: String}) => {  
+        
+      dispatch(setSongInfo({
+        song: {
+          id: item.songId,
+          name: item.songName,
+          artist: item.ArtistName,
+          mp3: null
+        },
+        songLength: item.duration,
+      }));
+  
+      dispatch(setSongInfo({
+        song: {
+          id: item.songId,
+          name: item.songName,
+          artist: item.ArtistName,
+          mp3: await fetchSongUrl(item.songId),
+        },
+        songLength: item.duration,
+      }));
+
+        dispatch(setPlay({play:true}));
+        dispatch(setMusicSeek({seek:0}));
+        dispatch(setDuration({duration:0}));
     
         sessionStorage.setItem("songId", item?.songId?.toString());
       }
