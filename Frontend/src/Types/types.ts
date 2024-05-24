@@ -12,6 +12,7 @@ export interface Song {
 export interface QueueState {
     musicQueue: {
         Queue: Song[]
+        shuffledQueue: Song[]
         playIndex: number
     }
 }
@@ -28,6 +29,8 @@ export interface musicPlayerState {
       miniplayer:String,
       play:Boolean,
       musicSeek:number,
-      duration: number
+      duration: number,
+      shuffle:Boolean,
+      repeat:String
     };
 }

@@ -13,30 +13,30 @@ import fetchSongUrl from '../../Functions/fetchSongUrl'
 const FullScreenMusic = () => {
 
     const dispatch = useDispatch();
-    const { miniplayer, song, duration, songLength } = useSelector((state:musicPlayerState) => state.musicPlayer);
-    const {Queue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
+    const { miniplayer, song, duration, songLength, repeat, shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
+    const {Queue, playIndex, shuffledQueue} = useSelector((state:QueueState)=> state.musicQueue)
 
     const playFromQueue = async(songIndex:number) => {
       dispatch(setPlayIndex(songIndex));
 
       dispatch(setSongInfo({
         song: {
-          id: Queue[songIndex].songId,
-          name: Queue[songIndex].songName,
-          artist : Queue[songIndex].ArtistName,
+          id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
+          name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
+          artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
           mp3: null
         },
-        songLength: Queue[songIndex].duration,
+        songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
       }))
 
       dispatch(setSongInfo({
         song: {
-          id: Queue[songIndex].songId,
-          name: Queue[songIndex].songName,
-          artist : Queue[songIndex].ArtistName,
-          mp3: await fetchSongUrl(Queue[songIndex].songId),
+          id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
+          name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
+          artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
+          mp3: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
         },
-        songLength: Queue[songIndex].duration,
+        songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
       }))
 
       dispatch(setPlay({play:true}));
@@ -45,6 +45,7 @@ const FullScreenMusic = () => {
     }
 
     const seeker = (event:any) => {
+      if(song.mp3!==null){
         var div:any = document.querySelector('.seek');
         var rect = div.getBoundingClientRect();
         var x = event.clientX - rect.left;
@@ -52,24 +53,43 @@ const FullScreenMusic = () => {
         var percentage = (x / seekBarWidth) * 100;
     
         var newTime = (percentage / 100) * songLength;
-        dispatch(setMusicSeek({seek:newTime}))
+        dispatch(setMusicSeek({seek:newTime}));
+      }
     }
 
     const prevButton = () => {
-      if(duration>=5){
-        dispatch(setMusicSeek({seek:0}))
-      }
-      else{
-          if(playIndex===0){
+      if(shuffle ? shuffledQueue.length!==0 : Queue.length!==0){
+        if(duration>=5){
+          dispatch(setMusicSeek({seek:0}))
+        }
+        else{
+          if(repeat==='off'){
+            if(playIndex===0){
               playFromQueue(0);
-          } else {
+            } else {
               playFromQueue(playIndex-1);
+            }
+          } else {
+            if(playIndex===0){
+              playFromQueue(shuffle ? shuffledQueue.length-1 : Queue.length-1);
+            } else {
+              playFromQueue(playIndex-1);
+            }
           }
+        }
       }
     }
 
     const nextButton = () => {
-      playFromQueue(playIndex+1);
+      if(shuffle ? shuffledQueue.length!==0 : Queue.length!==0){
+          if(playIndex < (shuffle ? shuffledQueue.length - 1 : Queue.length-1)){
+              playFromQueue(playIndex+1);
+          } else {
+              if(repeat!=='off'){
+                  playFromQueue(0);
+              }
+          }
+      }
     }
 
   return (

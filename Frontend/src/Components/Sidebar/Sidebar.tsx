@@ -17,23 +17,22 @@ const Sidebar = () => {
     const pathParts = location.pathname.split('/');
     setLoc(pathParts[1] || '');
     setLoc2(pathParts[2] || '');
-  }, [location]);  
+  }, [location]);
 
   const array = [
     {
       id: 1,
-      name: 'Anirudh hits',
+      name: 'The Weeknd Terminal',
     },
     {
       id: 2,
-      name: 'Hollywood pop culture',
+      name: 'Anirudh hits',
     },
     {
       id: 3,
-      name: 'The Weeknd Terminal',
-    }
+      name: 'Hollywood pop culture',
+    },
   ]
-  
 
   return (
     <div className='h-screen py-[2rem] flex flex-col text-[0.8rem] gap-[2.5rem] text-white'>
@@ -66,11 +65,25 @@ const Sidebar = () => {
                 </div>
               </Link>
               {
-                array.map((item)=>{
+                array.map((item,index)=>{
+
+                  const getColorClass = () => {
+                    if (loc === 'playlists' && item.id === parseInt(loc2)) {
+                      return 'text-[#E76716]';
+                    } else if (index === 0) {
+                      return 'text-blue-500';
+                    } else if (index === 1) {
+                      return 'text-green-500';
+                    } else if (index === 2) {
+                      return 'text-yellow-400';
+                    }
+                    return '';
+                  };
+
                   return(
                     <Link to={`/playlists/${item.id}`} key={item.id}>
                       <div key={item.id} className={`flex items-center gap-4 px-4 cursor-pointer py-3 hover:bg-[#ffffff30] ${(loc==='playlists' && parseInt(loc2)===item.id) && 'border-l-2 bg-gradient-to-r border-[#E76716] from-[#E7671660] to-black text-[#E76716]'}`}>
-                        <GoPin className={`text-xl rounded-full ${loc==='playlists' ? (item.id===1 && parseInt(loc2)!==1) ? 'text-blue-500' : (item.id===2 && parseInt(loc2)!==2) ? 'text-green-500' : (item.id===3 && parseInt(loc2)!==3) ? 'text-yellow-400' : ((item.id===parseInt(loc2)) && 'text-[#E76716]') : item.id===1 ? 'text-blue-500' : item.id===2 ? 'text-green-500' : item.id===3 && 'text-yellow-400'}`}/>
+                      <GoPin className={`text-xl rounded-full ${getColorClass()}`} />
                         <p>{item.name}</p>
                       </div>
                     </Link>

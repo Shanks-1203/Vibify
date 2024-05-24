@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PiVinylRecord } from 'react-icons/pi'
 import { IoReorderTwoOutline } from "react-icons/io5";
-import { QueueState } from '../../Types/types';
+import { QueueState, musicPlayerState } from '../../Types/types';
 import { useSelector } from 'react-redux';
 import durationCalculator from '../../Functions/durationCalculator';
 
 const QueueList = ({playFromQueue}:{playFromQueue:Function}) => {
 
-  const {Queue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
-
-  const [highestPlayIndex, setHighestPlayIndex] = useState(0);
+  const {Queue, shuffledQueue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
+  const { shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
+  const [highestPlayIndex, setHighestPlayIndex] = useState(0)
 
   useEffect(()=>{
     if(playIndex>=highestPlayIndex){
@@ -20,7 +20,7 @@ const QueueList = ({playFromQueue}:{playFromQueue:Function}) => {
   return (
     <div className='flex flex-col gap-[0.5rem] w-full text-white pt-[1rem]'>
       {
-        Queue.map((song,index)=>{
+        (shuffle ? shuffledQueue : Queue).map((song,index)=>{
             return(
               <>
                 <div key={index} className={`w-full h-[3.7rem] rounded-sm hover:bg-[#80808040] cursor-pointer flex gap-[1.2rem] items-center px-[1.5rem] ${index===playIndex && 'bg-[#80808040]'}`} onClick={()=>playFromQueue(index)}>

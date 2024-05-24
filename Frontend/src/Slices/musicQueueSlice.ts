@@ -1,7 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { Song } from '../Types/types';
 
-const initialState:{Queue:{ArtistName: String, PlaylistId: number, PlaylistName: String, UserName: String, artistId: number, duration: number, songId: number, songName: String}[], playIndex:number} = {
+const initialState:{Queue:Song[], shuffledQueue:Song[], playIndex:number} = {
     Queue: [],
+    shuffledQueue: [],
     playIndex: 0
 };
 
@@ -9,17 +11,24 @@ const musicQueueSlice = createSlice({
     name: 'musicQueue',
     initialState,
     reducers: {
-        addMusic: (state, action) => {
+        addMusic(state, action) {
             state.Queue.push(action.payload);
         },
-        clearQueue: (state) => {
+        clearQueue(state) {
             state.Queue.length = 0;
         },
-        setPlayIndex: (state, action) => {
+        setPlayIndex(state, action) {
             state.playIndex = action.payload;
-        }
+        },
+        addToShuffledQueue(state, action) {
+            console.log(action.payload);
+            state.shuffledQueue.push(action.payload);
+        },
+        clearShuffledQueue(state) {
+            state.shuffledQueue.length = 0;
+        },
     }
 })
 
-export const { addMusic, clearQueue, setPlayIndex } = musicQueueSlice.actions;
+export const { addMusic, clearQueue, setPlayIndex, clearShuffledQueue, addToShuffledQueue } = musicQueueSlice.actions;
 export default musicQueueSlice.reducer

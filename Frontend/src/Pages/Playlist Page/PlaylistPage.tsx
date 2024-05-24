@@ -22,7 +22,7 @@ const PlaylistPage = () => {
 
   const [songs, setSongs] = useState<Song[]>([])
   
-  const { miniplayer } = useSelector((state:musicPlayerState) => state.musicPlayer);
+  const { miniplayer, song } = useSelector((state:musicPlayerState) => state.musicPlayer);
 
   const getSongs = async() => {
     try{
@@ -98,15 +98,15 @@ const PlaylistPage = () => {
 
           <div className='flex flex-col gap-[1rem] mt-[2rem] text-[0.8rem]'>
             {
-              songs.map((song:Song,index)=>{
+              songs.map((item:Song,index)=>{
                 return (
-                <div key={song.songId} className='hover:bg-[#80808040] w-full px-[1.5rem] flex items-center h-[4rem] rounded-md text-white cursor-pointer hover:scale-[1.01] transition-all' onClick={()=>playlistPlay(index)}>
+                <div key={item.songId} className={`hover:bg-[#80808040] w-full px-[1.5rem] flex items-center h-[4rem] rounded-md text-white cursor-pointer ${song.id === item.songId && 'bg-[#80808040]'}`} onClick={()=>playlistPlay(index)}>
                   <div className='flex gap-[1.5rem] items-center w-[50%]'>
                     <p className='text-[2rem] grid place-items-center'><PiVinylRecord/></p>
-                    <p className='w-[35%]'>{song.songName}</p>
-                    <p className='opacity-65'>{song.ArtistName}</p>
+                    <p className='w-[35%]'>{item.songName}</p>
+                    <p className='opacity-65'>{item.ArtistName}</p>
                   </div>
-                  <p className='ml-auto'>{durationCalculator(song.duration)}</p>
+                  <p className='ml-auto'>{durationCalculator(item.duration)}</p>
                   <p className='text-xl ml-[1.5rem]'><IoMdMore/></p>
                 </div>
               )})

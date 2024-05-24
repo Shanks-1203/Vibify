@@ -1,86 +1,148 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PiVinylRecord } from 'react-icons/pi'
 import { MdKeyboardArrowDown } from "react-icons/md";
 import MiniSeekbar from '../Seekbar/Mini Seekbar/MiniSeekbar';
 import MiniControls from '../Controls/Mini Controls/MiniControls';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDuration, setMiniplayer, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
-import { QueueState, musicPlayerState } from '../../Types/types';
-import { setPlayIndex } from '../../Slices/musicQueueSlice';
+import { QueueState, Song, musicPlayerState } from '../../Types/types';
+import { addToShuffledQueue, clearShuffledQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import { CiHeart } from "react-icons/ci";
 import { MdOutlineLibraryAdd } from "react-icons/md";
 import fetchSongUrl from '../../Functions/fetchSongUrl';
 
-
-
 const MiniPlayer = () => {
 
-    const {Queue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
+    const {Queue, shuffledQueue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
     const dispatch = useDispatch();
-    const { miniplayer, duration, play, song, musicSeek, songLength } = useSelector((state:musicPlayerState) => state.musicPlayer);
+    const { miniplayer, duration, play, song, musicSeek, songLength, repeat, shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
     const audioRef = useRef<HTMLAudioElement>(null);
-
+    
     const playFromQueue = async(songIndex:number) => {
-        dispatch(setPlayIndex(songIndex));
-  
-        dispatch(setSongInfo({
-          song: {
-            id: Queue[songIndex].songId,
-            name: Queue[songIndex].songName,
-            artist : Queue[songIndex].ArtistName,
-            mp3: null
-          },
-          songLength: Queue[songIndex].duration,
-        }))
-  
-        dispatch(setSongInfo({
-          song: {
-            id: Queue[songIndex].songId,
-            name: Queue[songIndex].songName,
-            artist : Queue[songIndex].ArtistName,
-            mp3: await fetchSongUrl(Queue[songIndex].songId),
-          },
-          songLength: Queue[songIndex].duration,
-        }))
-  
-        dispatch(setPlay({play:true}));
-        dispatch(setMusicSeek({seek:0}));
-        dispatch(setDuration({duration:0}));
-  
-      }
+      dispatch(setPlayIndex(songIndex));
+
+      dispatch(setSongInfo({
+        song: {
+          id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
+          name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
+          artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
+          mp3: null
+        },
+        songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
+      }))
+
+      dispatch(setSongInfo({
+        song: {
+          id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
+          name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
+          artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
+          mp3: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
+        },
+        songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
+      }))
+
+      dispatch(setPlay({play:true}));
+      dispatch(setMusicSeek({seek:0}));
+      dispatch(setDuration({duration:0}));
+    }    
 
     const prevButton = () => {
+      if(shuffle ? shuffledQueue.length!==0 : Queue.length!==0){
         if(duration>=5){
-            if (audioRef.current) {
-                dispatch(setMusicSeek({seek:0}))
-            }
+          dispatch(setMusicSeek({seek:0}))
         }
         else{
+          if(repeat==='off'){
             if(playIndex===0){
-                playFromQueue(0);
+              playFromQueue(0);
             } else {
-                playFromQueue(playIndex-1);
+              playFromQueue(playIndex-1);
             }
+          } else {
+            if(playIndex===0){
+              playFromQueue(shuffle ? shuffledQueue.length-1 : Queue.length-1);
+            } else {
+              playFromQueue(playIndex-1);
+            }
+          }
         }
+      }
     }
 
     const nextButton = () => {
-        playFromQueue(playIndex+1);
+      if(shuffle ? shuffledQueue.length!==0 : Queue.length!==0){
+          if(playIndex < (shuffle ? shuffledQueue.length - 1 : Queue.length-1)){
+              playFromQueue(playIndex+1);
+          } else {
+              if(repeat!=='off'){
+                  playFromQueue(0);
+              }
+          }
+      }
     }
 
     useEffect(()=>{
-        if(Math.floor(duration)===Math.floor(songLength) && (playIndex < (Queue.length - 1))){
-            setTimeout(() => {
-                nextButton();
-            }, 1000);
-        }
-        else if(Math.floor(duration)===Math.floor(songLength)){
-            dispatch(setPlay({play:false}))
-            dispatch(setMusicSeek({seek:0}));
-            dispatch(setDuration({duration:0}));
+        if(repeat==='once'){
+            if(Math.floor(duration)===Math.floor(songLength)){
+                setTimeout(() => {
+                    dispatch(setDuration({duration:0}));
+                    dispatch(setMusicSeek({seek:0}));
+                    dispatch(setPlay({play:true}));
+                    playFromQueue(playIndex);
+                }, 1000);
+            }
+        } else {
+            if(Math.floor(duration)===Math.floor(songLength) && (playIndex < (shuffle ? shuffledQueue.length - 1 : Queue.length-1))){
+                setTimeout(() => {
+                    nextButton();
+                }, 1000);
+            }
+            else if(Math.floor(duration)===Math.floor(songLength)){
+                if(repeat==='off'){
+                    dispatch(setPlay({play:false}))
+                    dispatch(setMusicSeek({seek:0}));
+                    dispatch(setDuration({duration:0}));
+                } else if (repeat==='on') {
+                    setTimeout(() => {
+                        nextButton()
+                    }, 1000);
+                }
+            }
         }
     },[duration])
-    
+
+    useEffect(() => {
+      if(shuffle){
+        dispatch(clearShuffledQueue());
+        dispatch(addToShuffledQueue(Queue[playIndex]));
+        
+        const remainingSongs = Queue.filter((item, index) => index !== playIndex);
+        
+        const shuffleArray = (array:Song[]) => {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        };
+        
+        const shuffledSongs = shuffleArray(remainingSongs);
+        
+        shuffledSongs.map((song:Song) => {
+          dispatch(addToShuffledQueue(song));
+        });
+        
+        dispatch(setPlayIndex(0));
+      } else {
+        const songId = song.id;
+
+        Queue.map((item,index)=>{
+          if(item.songId === songId){
+            dispatch(setPlayIndex(index));
+          }
+        })
+      }
+    }, [shuffle, dispatch, Queue]);
     
     useEffect(() => {
         if (!play) {
@@ -95,16 +157,18 @@ const MiniPlayer = () => {
     }, [play, duration, dispatch]);
 
     const seeker = (event:any) => {
-        var div:any = document.querySelector('.miniseek');
-        var rect = div.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var seekBarWidth = rect.width;
-        var percentage = (x / seekBarWidth) * 100;
-
-        if (audioRef.current) {
-            var songLength = audioRef.current.duration;
-            var newTime = (percentage / 100) * songLength;
-            dispatch(setMusicSeek({seek:newTime}))
+        if(song.mp3!==null){
+            var div:any = document.querySelector('.miniseek');
+            var rect = div.getBoundingClientRect();
+            var x = event.clientX - rect.left;
+            var seekBarWidth = rect.width;
+            var percentage = (x / seekBarWidth) * 100;
+    
+            if (audioRef.current) {
+                var songLength = audioRef.current.duration;
+                var newTime = (percentage / 100) * songLength;
+                dispatch(setMusicSeek({seek:newTime}))
+            }
         }
     }
 

@@ -1,4 +1,3 @@
-import React from 'react'
 import weeknd from '../../Assets/Images/The Weeknd.png'
 import { BsDot } from "react-icons/bs";
 

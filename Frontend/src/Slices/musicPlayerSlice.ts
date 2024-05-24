@@ -11,7 +11,9 @@ const initialState = {
   songLength: 0,
   play:false,
   musicSeek:0,
-  duration:0
+  duration:0,
+  shuffle: false,
+  repeat: 'off',
 };
 
 const musicPlayerSlice = createSlice({
@@ -36,9 +38,15 @@ const musicPlayerSlice = createSlice({
     },
     setDuration(state, action) {
       state.duration = action.payload.duration;
-    }
+    },
+    toggleShuffle(state) {
+      state.shuffle = !state.shuffle;
+    },
+    setRepeat(state, action) {
+      state.repeat = action.payload.repeat;
+    },
   },
 });
 
-export const { setSongInfo, togglePlay, setMiniplayer, setPlay, setMusicSeek, setDuration } = musicPlayerSlice.actions;
+export const { setSongInfo, togglePlay, setMiniplayer, setPlay, setMusicSeek, setDuration,setRepeat, toggleShuffle } = musicPlayerSlice.actions;
 export default musicPlayerSlice.reducer;
