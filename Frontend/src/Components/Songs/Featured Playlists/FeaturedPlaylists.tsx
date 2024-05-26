@@ -15,8 +15,15 @@ const FeaturedPlaylists = () => {
   const [playlistList, setPlaylistList] = useState([]);
 
   const playlistFetch = async() => {
-    const resp = await httpClient.get('/home-playlists');
-    setPlaylistList(resp.data);
+    try{
+      const token = localStorage.getItem('token');
+      const resp = await httpClient.get('/home-playlists',{
+        headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      setPlaylistList(resp.data);
+    } catch(err) {
+      console.log(err);
+    }
   }
   
   useEffect(()=>{

@@ -55,25 +55,65 @@ app.get('/artist/:artistId', async(req, res) => {
 
 //Get songs in home page
 app.get('/home-songs', async(req, res) => {
-  try {
-    query('SELECT s.*, a."ArtistName" FROM "Songs" s JOIN "Artist" a ON s."artistId" = a."ArtistId"').then((result)=>{
-    res.status(200).send(result.rows);
-  })} 
-  catch (err) {
-    console.error(err);
-    res.status(500).send();
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    try {  
+      query('SELECT s.*, a."ArtistName" FROM "Songs" s JOIN "Artist" a ON s."artistId" = a."ArtistId"').then((result)=>{
+      res.status(200).send(result.rows);
+    })} 
+    catch (err) {
+      console.error(err);
+      res.status(500).send();
+    }
   }
+  else{
+    try {
+      const decoded:any = jwt.verify(token, JWT_SECRET);
+  
+      query('SELECT s.*, a."ArtistName" FROM "Songs" s JOIN "Artist" a ON s."artistId" = a."ArtistId"').then((result)=>{
+      res.status(200).send(result.rows);
+    })} 
+    catch (err) {
+      console.error(err);
+      res.status(500).send();
+    }
+  }
+
 });
+
 
 //Get playlists in home page
 app.get('/home-playlists', async(req,res)=> {
-  try {
-    const result = await query('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" GROUP BY pl."Id", pl."Name"');
-    res.status(200).send(result.rows);
-  } catch(err) {
-    console.error(err);
-    res.status(500).send();
+
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    try {  
+      const result = await query('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" GROUP BY pl."Id", pl."Name"');
+      res.status(200).send(result.rows);
+    } catch(err) {
+      console.error(err);
+      res.status(500).send();
+    }
   }
+
+  else {
+    try {
+      const decoded:any = jwt.verify(token, JWT_SECRET);
+      const result = await query('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" WHERE pl."CreatorId" = $1 GROUP BY pl."Id", pl."Name"',[decoded.userId]);
+      res.status(200).send(result.rows);
+    } catch(err:any) {
+      if(err.name === 'TokenExpiredError'){
+        res.status(401).send('Token expired');
+      }
+      console.error(err);
+      res.status(500).send();
+    }
+  }
+
 })
 
 //get song from firebase

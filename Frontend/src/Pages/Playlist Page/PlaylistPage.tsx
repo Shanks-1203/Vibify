@@ -8,11 +8,12 @@ import RelatedPlaylists from '../../Components/Related Playlists/RelatedPlaylist
 import { useDispatch, useSelector } from 'react-redux';
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
 import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
-import { addMusic, clearQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
+import { addMusic, addToShuffledQueue, clearQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import { Song, musicPlayerState } from '../../Types/types';
 import CommonHeader from '../../Components/Header/CommonHeader';
 import { useLocation, useParams } from 'react-router-dom';
 import fetchSongUrl from '../../Functions/fetchSongUrl';
+import { songsDropDown } from '../../Constants/SongsDropDown';
 
 const PlaylistPage = () => {
 
@@ -21,8 +22,9 @@ const PlaylistPage = () => {
   const {playlistId} = useParams()
 
   const [songs, setSongs] = useState<Song[]>([])
-  
-  const { miniplayer, song } = useSelector((state:musicPlayerState) => state.musicPlayer);
+  const [dropdown, setDropdown] = useState<number | null>(null);
+
+  const { miniplayer, song, shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
 
   const getSongs = async() => {
     try{
@@ -72,12 +74,26 @@ const PlaylistPage = () => {
     dispatch(clearQueue());
     playSong(songs[songNumber]);
     dispatch(setPlayIndex(0))
-    dispatch(addMusic(songs[songNumber]));
     songs.map((song:{ArtistName: String, PlaylistId: number, PlaylistName: String, UserName: String, artistId: number, duration: number, songId: number, songName: String}, index)=>{
-      if(index!==songNumber){
         dispatch(addMusic(song));
-      }
+        return null;
     })
+  }
+
+  const toggleDropdown = (index:number, event:any) => {
+    if(dropdown !== index) {
+      setDropdown(index);
+    } else {
+      setDropdown(null)
+    }
+    event.stopPropagation();
+  }
+
+  const addToQueue = (index:number, event:any) => {
+    event.stopPropagation();
+    dispatch(addMusic(songs[index]));
+    dispatch(addToShuffledQueue(songs[index]));
+    setDropdown(null)
   }
 
   return (
@@ -107,7 +123,23 @@ const PlaylistPage = () => {
                     <p className='opacity-65'>{item.ArtistName}</p>
                   </div>
                   <p className='ml-auto'>{durationCalculator(item.duration)}</p>
-                  <p className='text-xl ml-[1.5rem]'><IoMdMore/></p>
+                  <div className='relative ml-[1.5rem]'>
+                    <p className='p-[0.6rem] rounded-full hover:bg-[#80808040]' onClick={(event)=>toggleDropdown(index, event)}><IoMdMore className='text-xl'/></p>
+                    { dropdown===index &&
+                      <div className='w-[10rem] rounded-lg absolute left-[-10rem] top-0 bg-black overflow-hidden'>
+                        {
+                          songsDropDown.map((item)=>{
+                            return (
+                              <div className='flex w-full h-[3rem] gap-[1rem] items-center px-[1rem] hover:bg-[#80808040]' onClick={(event) => item.function === 'atq' && addToQueue(index, event)}>
+                                <item.icon className='text-xl'/>
+                                <p className='text-xs'>{item.name}</p>
+                              </div>
+                            )
+                          })
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
               )})
             }

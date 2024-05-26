@@ -25,7 +25,7 @@ const LoginPage = () => {
 
       if(resp?.status===200){
         localStorage.setItem('token', resp?.data?.token)
-        navigate('/home');
+        navigate('/');
       } 
 
     } catch(err:any){
@@ -62,10 +62,10 @@ const LoginPage = () => {
   }
 
   return (
-    <div className='w-full flex text-white h-screen bg-gradient-to-br from-[#23203E] to-black'>
+    <div className='w-full flex text-white h-screen bg-black'>
       <div className="w-[50%] grid place-items-center">
         <div>
-          <p className='text-7xl'>Vibe<br />to the<br /><span className='text-8xl font-semibold text-[#23BDB6]'>Rhythm</span></p>
+          <p className='text-7xl'>Vibe<br />to the<br /><span className='text-8xl font-semibold text-[#E76716]'>Rhythm</span></p>
           <p className='mt-3'>with Vibify</p>
         </div>
       </div>

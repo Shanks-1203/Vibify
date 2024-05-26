@@ -142,7 +142,7 @@ const MiniPlayer = () => {
           }
         })
       }
-    }, [shuffle, dispatch, Queue]);
+    }, [shuffle, dispatch, !shuffle && Queue]);
     
     useEffect(() => {
         if (!play) {

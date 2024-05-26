@@ -21,8 +21,11 @@ const Songs = () => {
   const [songsList, setSongsList] = useState([]);
 
   const songFetch = async() => {
+    const token = localStorage.getItem('token')
     try{
-      const resp = await httpClient.get('/home-songs');
+      const resp = await httpClient.get('/home-songs',{
+        headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       setSongsList(resp.data);
     } catch(err){
       console.error(err);

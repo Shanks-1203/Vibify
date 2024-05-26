@@ -1,7 +1,7 @@
 import { SlMusicToneAlt } from "react-icons/sl";
-import { BiSolidPlaylist } from "react-icons/bi";
 import { MdOutlineLibraryMusic } from "react-icons/md";
 import { GiMicrophone } from "react-icons/gi";
+import { PiPlaylist } from "react-icons/pi";
 
 interface Route {
     icon: any
@@ -16,7 +16,7 @@ const routes:Route[] = [
         route: ''
     },
     {
-        icon: BiSolidPlaylist,
+        icon: PiPlaylist,
         name: 'Playlists',
         route: 'playlists'
     },
