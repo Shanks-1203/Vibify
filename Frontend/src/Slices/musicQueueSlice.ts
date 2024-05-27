@@ -21,7 +21,6 @@ const musicQueueSlice = createSlice({
             state.playIndex = action.payload;
         },
         addToShuffledQueue(state, action) {
-            console.log(action.payload);
             state.shuffledQueue.push(action.payload);
         },
         clearShuffledQueue(state) {

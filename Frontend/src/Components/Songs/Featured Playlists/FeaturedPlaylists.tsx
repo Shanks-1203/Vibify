@@ -3,12 +3,7 @@ import { BiSolidPlaylist } from "react-icons/bi";
 import httpClient from '../../../httpClient';
 import { IoMdMore } from "react-icons/io";
 import { Link } from 'react-router-dom';
-
-type playlistType = {
-  playlistId:number
-  playlistName:String
-  trackcount: number
-};
+import { playlistType } from '../../../Types/types';
 
 const FeaturedPlaylists = () => {
 

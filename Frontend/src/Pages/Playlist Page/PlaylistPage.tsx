@@ -9,11 +9,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
 import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import { addMusic, addToShuffledQueue, clearQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
-import { Song, musicPlayerState } from '../../Types/types';
+import { QueueState, Song, musicPlayerState } from '../../Types/types';
 import CommonHeader from '../../Components/Header/CommonHeader';
 import { useLocation, useParams } from 'react-router-dom';
 import fetchSongUrl from '../../Functions/fetchSongUrl';
 import { songsDropDown } from '../../Constants/SongsDropDown';
+import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
 
 const PlaylistPage = () => {
 
@@ -24,7 +25,8 @@ const PlaylistPage = () => {
   const [songs, setSongs] = useState<Song[]>([])
   const [dropdown, setDropdown] = useState<number | null>(null);
 
-  const { miniplayer, song, shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
+  const { miniplayer, song } = useSelector((state:musicPlayerState) => state.musicPlayer);
+  const { Queue } = useSelector((state:QueueState) => state.musicQueue);
 
   const getSongs = async() => {
     try{
@@ -81,19 +83,25 @@ const PlaylistPage = () => {
   }
 
   const toggleDropdown = (index:number, event:any) => {
-    if(dropdown !== index) {
-      setDropdown(index);
-    } else {
-      setDropdown(null)
-    }
     event.stopPropagation();
+    setDropdown(dropdown === index ? null : index);
   }
 
   const addToQueue = (index:number, event:any) => {
     event.stopPropagation();
     dispatch(addMusic(songs[index]));
+    if(Queue.length===0){
+      playSong(songs[index]);
+    }
     dispatch(addToShuffledQueue(songs[index]));
     setDropdown(null)
+  }
+
+  const addToPlaylist = (index:number, event:any) => {
+    event.stopPropagation();
+    dispatch(togglePopup());
+    dispatch(setSongId(songs[index].songId));
+    setDropdown(null);
   }
 
   return (
@@ -128,9 +136,17 @@ const PlaylistPage = () => {
                     { dropdown===index &&
                       <div className='w-[10rem] rounded-lg absolute left-[-10rem] top-0 bg-black overflow-hidden'>
                         {
-                          songsDropDown.map((item)=>{
+                          songsDropDown.map((item, keyIndex)=>{
                             return (
-                              <div className='flex w-full h-[3rem] gap-[1rem] items-center px-[1rem] hover:bg-[#80808040]' onClick={(event) => item.function === 'atq' && addToQueue(index, event)}>
+                              <div key={keyIndex} className='flex w-full h-[3rem] gap-[1rem] items-center px-[1rem] hover:bg-[#80808040]' 
+                              onClick={(event) =>
+                              {
+                                if(item.function === 'atq'){
+                                  addToQueue(index, event);
+                                } else if(item.function==='stp') {
+                                  addToPlaylist(index, event);
+                                }
+                              }}>
                                 <item.icon className='text-xl'/>
                                 <p className='text-xs'>{item.name}</p>
                               </div>

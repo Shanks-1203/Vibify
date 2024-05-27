@@ -86,6 +86,32 @@ app.get('/home-songs', (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
     }
 }));
+//Add songs to playlist
+app.post('/saveToPlaylist', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { selectedPlaylists, songId } = req.body;
+    if (!selectedPlaylists || selectedPlaylists.length === 0 || !songId) {
+        return res.status(400).send({ error: 'Invalid input: selectedPlaylists and songId are required' });
+    }
+    try {
+        const present = yield (0, db_1.default)('SELECT "playlistId" FROM "PlaylistDetails" WHERE "songId" = $1 AND "playlistId" = ANY($2::int[])', [songId, selectedPlaylists]);
+        const existingPlaylists = present.rows.map(row => row.playlistId);
+        const newPlaylists = selectedPlaylists.filter((playlistId) => !existingPlaylists.includes(playlistId));
+        if (newPlaylists.length > 0) {
+            const insertQuery = 'INSERT INTO "PlaylistDetails" ("playlistId", "songId") VALUES ($1, $2)';
+            for (const playlistId of newPlaylists) {
+                yield (0, db_1.default)(insertQuery, [playlistId, songId]);
+            }
+            return res.status(200).send('Added successfully');
+        }
+        else {
+            return res.status(200).send('Already exists in all selected playlists');
+        }
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).send({ error: 'An error occurred while saving the song to playlists' });
+    }
+}));
 //Get playlists in home page
 app.get('/home-playlists', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const authHeader = req.headers['authorization'];
@@ -180,7 +206,7 @@ app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             const validPassword = yield bcrypt_1.default.compare(password, userData.password);
             if (validPassword) {
                 const token = jsonwebtoken_1.default.sign({ userId: userData.UserId }, JWT_SECRET, {
-                    expiresIn: '1h'
+                    expiresIn: '10h'
                 });
                 res.status(200).send({ token });
             }

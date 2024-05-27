@@ -55,7 +55,7 @@ const LibraryPage = () => {
     <div className='w-full h-screen relative text-white p-[2rem]'>
 
         <CommonHeader/>
-        <p className='text-sm opacity-65 mt-[2rem]'>Your Playlist</p>
+        <p className='text-sm opacity-65 mt-[2rem]'>Your Playlists</p>
 
         <div className='flex gap-[3rem]'>
 
@@ -85,7 +85,7 @@ const LibraryPage = () => {
         </div>
 
 
-        <p className='text-sm opacity-65 mt-[2rem]'>You Might Also Like</p>
+        <p className='text-sm opacity-65 mt-[2rem]'>Liked Playlists</p>
         
         <div className='flex gap-[3rem]'>
             {(playlists ? playlists : array).map((item,index)=>{

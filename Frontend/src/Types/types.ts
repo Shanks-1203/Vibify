@@ -34,3 +34,16 @@ export interface musicPlayerState {
       repeat:String
     };
 }
+
+export type playlistType = {
+  playlistId:number
+  playlistName:String
+  trackcount: number
+};
+
+export interface saveToPlaylist {
+  saveToPlaylist: {
+    popup:Boolean,
+    songId: number | null
+  }
+}

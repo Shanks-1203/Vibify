@@ -10,6 +10,8 @@ import { addToShuffledQueue, clearShuffledQueue, setPlayIndex } from '../../Slic
 import { CiHeart } from "react-icons/ci";
 import { MdOutlineLibraryAdd } from "react-icons/md";
 import fetchSongUrl from '../../Functions/fetchSongUrl';
+import { CgPlayListAdd } from "react-icons/cg";
+
 
 const MiniPlayer = () => {
 
@@ -224,7 +226,7 @@ const MiniPlayer = () => {
       
       <div className='flex items-center gap-[2rem] text-2xl'>
         <CiHeart className='cursor-pointer'/>
-        <MdOutlineLibraryAdd className='cursor-pointer'/>
+        <CgPlayListAdd className='cursor-pointer'/>
       </div>
 
       <p className='text-2xl cursor-pointer rotate-180 transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'max'}))}><MdKeyboardArrowDown/></p>

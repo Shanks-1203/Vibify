@@ -83,6 +83,39 @@ app.get('/home-songs', async(req, res) => {
 
 });
 
+//Add songs to playlist
+app.post('/saveToPlaylist', async (req, res) => {
+  const { selectedPlaylists, songId } = req.body;
+
+  if (!selectedPlaylists || selectedPlaylists.length === 0 || !songId) {
+    return res.status(400).send({ error: 'Invalid input: selectedPlaylists and songId are required' });
+  }
+
+  try {
+    const present = await query(
+      'SELECT "playlistId" FROM "PlaylistDetails" WHERE "songId" = $1 AND "playlistId" = ANY($2::int[])',
+      [songId, selectedPlaylists]
+    );
+
+    const existingPlaylists = present.rows.map(row => row.playlistId);
+    const newPlaylists = selectedPlaylists.filter((playlistId:Number) => !existingPlaylists.includes(playlistId));
+
+    if (newPlaylists.length > 0) {
+      const insertQuery = 'INSERT INTO "PlaylistDetails" ("playlistId", "songId") VALUES ($1, $2)';
+
+      for (const playlistId of newPlaylists) {
+        await query(insertQuery, [playlistId, songId]);
+      }
+
+      return res.status(200).send('Added successfully');
+    } else {
+      return res.status(200).send('Already exists in all selected playlists');
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ error: 'An error occurred while saving the song to playlists' });
+  }
+});
 
 //Get playlists in home page
 app.get('/home-playlists', async(req,res)=> {
@@ -194,7 +227,7 @@ app.post('/login', async(req,res)=>{
 
       if(validPassword){
         const token = jwt.sign({ userId: userData.UserId }, JWT_SECRET, {
-          expiresIn: '1h'
+          expiresIn: '10h'
         });
         res.status(200).send({ token });
       } else {
