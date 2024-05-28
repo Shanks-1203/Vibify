@@ -20,6 +20,7 @@ const cors_1 = __importDefault(require("cors"));
 const db_1 = __importDefault(require("./db"));
 var bodyParser = require('body-parser');
 const dotenv_1 = __importDefault(require("dotenv"));
+const multer_1 = __importDefault(require("multer"));
 const app = (0, express_1.default)();
 const serviceAccount = require('../../../Users/Divum/Documents/serviceAccountKey.json');
 app.use((0, cors_1.default)());
@@ -112,6 +113,26 @@ app.post('/saveToPlaylist', (req, res) => __awaiter(void 0, void 0, void 0, func
         return res.status(500).send({ error: 'An error occurred while saving the song to playlists' });
     }
 }));
+//Remove song from playlist
+app.post('/removeFromPlaylist', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { playlistId, songId } = req.body;
+    if (!playlistId || !songId) {
+        return res.status(400).send({ error: 'Invalid input: selectedPlaylists and songId are required' });
+    }
+    try {
+        const result = yield (0, db_1.default)('DELETE FROM "PlaylistDetails" WHERE "playlistId" = $1 AND "songId" = $2 RETURNING *', [playlistId, songId]);
+        if (result.rowCount && result.rowCount > 0) {
+            return res.status(200).send('Song removed from playlist successfully');
+        }
+        else {
+            return res.status(404).send({ error: 'Song not found in the specified playlist' });
+        }
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).send({ error: 'An error occurred while removing the song from playlists' });
+    }
+}));
 //Get playlists in home page
 app.get('/home-playlists', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const authHeader = req.headers['authorization'];
@@ -142,9 +163,9 @@ app.get('/home-playlists', (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 }));
 //get song from firebase
-app.get('/song/:songName', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const songName = req.params.songName;
-    const file = bucket.file(`${songName}.mp3`);
+app.get('/song/:songId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const songId = req.params.songId;
+    const file = bucket.file(`${songId}.mp3`);
     try {
         const [url] = yield file.getSignedUrl({
             action: 'read',
@@ -156,44 +177,27 @@ app.get('/song/:songName', (req, res) => __awaiter(void 0, void 0, void 0, funct
         res.status(500).send(error.message);
     }
 }));
-// Get Artists of playlist in home page
-app.get('/playlist-artists', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const result = yield (0, db_1.default)(`SELECT "ArtistName" FROM (SELECT p."Id", p."Name", a."ArtistId", STRING_AGG(DISTINCT a."ArtistName", ',') as "ArtistName" FROM "Playlist" AS p JOIN "PlaylistDetails" AS pd ON p."Id" = pd."playlistId" JOIN "Songs" AS s ON pd."songId" = s."songId" JOIN "Artist" AS a ON s."artistId" = a."ArtistId" GROUP BY p."Id", p."Name", a."ArtistId") WHERE "Id"=$1`, [req.query.id]);
-        res.status(200).send(result.rows);
-    }
-    catch (err) {
-        console.error(err);
-        res.status(500).send();
-    }
-}));
+const storage = multer_1.default.memoryStorage();
+const upload = (0, multer_1.default)({ storage: storage });
+//Upload folder to firebase
+app.post('/upload/:folderName', upload.single('song'), (req, res) => {
+    const folderName = req.params.folderName;
+    console.log('Folder Name:', folderName);
+    // const song = req.file
+    console.log('Form Data:', req.body);
+    console.log('File Data:', req.file);
+    // Send a response with the form data
+    res.status(200).send({ songname: "hi" });
+});
 //Get playlist details
 app.get('/playlists/:playlistId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, db_1.default)('SELECT s.*, a."ArtistName", p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", u."UserName" FROM public."Songs" AS s JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" JOIN public."PlaylistDetails" AS pd ON s."songId" = pd."songId" JOIN public."Playlist" AS p ON pd."playlistId" = p."Id" JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" WHERE p."Id" = $1', [req.params.playlistId]);
+        const result = yield (0, db_1.default)('SELECT s.*, a."ArtistName", p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", u."UserName" FROM public."Songs" AS s JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" JOIN public."PlaylistDetails" AS pd ON s."songId" = pd."songId" JOIN public."Playlist" AS p ON pd."playlistId" = p."Id" JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" WHERE p."Id" = $1 ORDER BY pd."id" DESC', [req.params.playlistId]);
         res.status(200).send(result.rows);
     }
     catch (err) {
         console.error(err);
         res.status(500).send();
-    }
-}));
-//Sidebar call
-app.get('/sidebar', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) {
-        return res.sendStatus(401); // Unauthorized
-    }
-    try {
-        const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
-        console.log(decoded.userId);
-        const resp = yield (0, db_1.default)('SELECT "UserName" FROM "UserList" WHERE "UserId"=$1', [decoded.userId]);
-        return res.status(200).send(resp.rows);
-    }
-    catch (err) {
-        console.error('Token verification error:', err);
-        // return res.sendStatus(403); // Forbidden
     }
 }));
 //Login api
@@ -252,4 +256,3 @@ app.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 app.listen('8080', () => {
     console.log('Server is running on port 8080');
 });
-// Artists in single playlist

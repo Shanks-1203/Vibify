@@ -37,11 +37,27 @@ const PlaylistPage = () => {
     }
   }
 
+  const addToPlaylist = (index:number, event:any) => {
+    event.stopPropagation();
+    dispatch(togglePopup());
+    dispatch(setSongId(songs[index].songId));
+    setDropdown(null);
+  }
+
+  const removeFromPlaylist = async(songId:number, playlistId:number, event:any) => {
+    event.stopPropagation();
+    const resp = await httpClient.post('/removeFromPlaylist',{
+      playlistId, songId
+    })
+    console.log(resp.data);
+    setDropdown(null);
+  }
+
   const location = useLocation();
 
   useEffect(()=>{
     getSongs();
-  },[location])
+  },[location, removeFromPlaylist])
 
   const playSong = async (item:{ArtistName: String, PlaylistId: number, PlaylistName: String, UserName: String, artistId: number, duration: number, songId: number, songName: String}) => {
   
@@ -97,13 +113,6 @@ const PlaylistPage = () => {
     setDropdown(null)
   }
 
-  const addToPlaylist = (index:number, event:any) => {
-    event.stopPropagation();
-    dispatch(togglePopup());
-    dispatch(setSongId(songs[index].songId));
-    setDropdown(null);
-  }
-
   return (
     <>
     <FullScreenMusic/>
@@ -134,21 +143,23 @@ const PlaylistPage = () => {
                   <div className='relative ml-[1.5rem]'>
                     <p className='p-[0.6rem] rounded-full hover:bg-[#80808040]' onClick={(event)=>toggleDropdown(index, event)}><IoMdMore className='text-xl'/></p>
                     { dropdown===index &&
-                      <div className='w-[10rem] rounded-lg absolute left-[-10rem] top-0 bg-black overflow-hidden'>
+                      <div className='w-[11rem] rounded-lg absolute left-[-11rem] top-0 bg-black overflow-hidden'>
                         {
-                          songsDropDown.map((item, keyIndex)=>{
+                          songsDropDown.map((dropdownItem, keyIndex)=>{
                             return (
                               <div key={keyIndex} className='flex w-full h-[3rem] gap-[1rem] items-center px-[1rem] hover:bg-[#80808040]' 
                               onClick={(event) =>
                               {
-                                if(item.function === 'atq'){
+                                if(dropdownItem.function === 'atq'){
                                   addToQueue(index, event);
-                                } else if(item.function==='stp') {
+                                } else if(dropdownItem.function==='stp') {
                                   addToPlaylist(index, event);
+                                } else if(dropdownItem.function='rfp'){
+                                  removeFromPlaylist(item.songId, item.PlaylistId, event);
                                 }
                               }}>
-                                <item.icon className='text-xl'/>
-                                <p className='text-xs'>{item.name}</p>
+                                <dropdownItem.icon className='text-xl'/>
+                                <p className='text-xs'>{dropdownItem.name}</p>
                               </div>
                             )
                           })

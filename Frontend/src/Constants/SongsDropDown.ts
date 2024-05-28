@@ -1,6 +1,7 @@
 import { PiQueue } from "react-icons/pi";
 import { HiOutlineQueueList } from "react-icons/hi2";
 import { CgPlayListAdd } from "react-icons/cg";
+import { CgPlayListRemove } from "react-icons/cg";
 
 export const songsDropDown = [
     {
@@ -17,5 +18,10 @@ export const songsDropDown = [
         icon: CgPlayListAdd,
         name: 'Save to Playlist',
         function: 'stp'
+    },
+    {
+        icon: CgPlayListRemove,
+        name: 'Remove from Playlist',
+        function: 'rfp'
     }
 ]

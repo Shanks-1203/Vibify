@@ -6,6 +6,12 @@ import cors from 'cors';
 import query from './db'
 var bodyParser = require('body-parser')
 import dotenv from 'dotenv';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+
+
+
 
 const app = express();
 const serviceAccount = require('../../../Users/Divum/Documents/serviceAccountKey.json');
@@ -117,6 +123,32 @@ app.post('/saveToPlaylist', async (req, res) => {
   }
 });
 
+
+//Remove song from playlist
+app.post('/removeFromPlaylist', async(req,res)=>{
+  const {playlistId, songId} = req.body;
+
+  if (!playlistId || !songId) {
+    return res.status(400).send({ error: 'Invalid input: selectedPlaylists and songId are required' });
+  }
+
+  try{
+    const result = await query(
+      'DELETE FROM "PlaylistDetails" WHERE "playlistId" = $1 AND "songId" = $2 RETURNING *',
+      [playlistId, songId]
+    );
+
+    if (result.rowCount && result.rowCount > 0) {
+      return res.status(200).send('Song removed from playlist successfully');
+    } else {
+      return res.status(404).send({ error: 'Song not found in the specified playlist' });
+    }
+  } catch(err) {
+    console.error(err);
+    return res.status(500).send({ error: 'An error occurred while removing the song from playlists' });
+  }
+})
+
 //Get playlists in home page
 app.get('/home-playlists', async(req,res)=> {
 
@@ -150,9 +182,9 @@ app.get('/home-playlists', async(req,res)=> {
 })
 
 //get song from firebase
-app.get('/song/:songName', async (req, res) => {
-  const songName = req.params.songName;
-  const file = bucket.file(`${songName}.mp3`);
+app.get('/song/:songId', async (req, res) => {
+  const songId = req.params.songId;
+  const file = bucket.file(`${songId}.mp3`);
   try {
     const [url] = await file.getSignedUrl({
       action: 'read',
@@ -164,50 +196,29 @@ app.get('/song/:songName', async (req, res) => {
   }
 });
 
-// Get Artists of playlist in home page
-app.get('/playlist-artists', async(req,res)=> {
-  try {
-    const result = await query(`SELECT "ArtistName" FROM (SELECT p."Id", p."Name", a."ArtistId", STRING_AGG(DISTINCT a."ArtistName", ',') as "ArtistName" FROM "Playlist" AS p JOIN "PlaylistDetails" AS pd ON p."Id" = pd."playlistId" JOIN "Songs" AS s ON pd."songId" = s."songId" JOIN "Artist" AS a ON s."artistId" = a."ArtistId" GROUP BY p."Id", p."Name", a."ArtistId") WHERE "Id"=$1`,[req.query.id]);
-    res.status(200).send(result.rows);
-  } catch(err) {
-    console.error(err);
-    res.status(500).send();
-  }
-})
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+//Upload folder to firebase
+app.post('/upload/', upload.single('song'), (req: any, res: any) => {
+
+  const song = req.file;
+  const songName = req.body.songName;
+  const duration = req.body.duration;
+  
+  res.status(200).send({songname:"hi"});
+});
+
 
 //Get playlist details
 app.get('/playlists/:playlistId', async(req,res)=>{
   try {
-    const result = await query('SELECT s.*, a."ArtistName", p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", u."UserName" FROM public."Songs" AS s JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" JOIN public."PlaylistDetails" AS pd ON s."songId" = pd."songId" JOIN public."Playlist" AS p ON pd."playlistId" = p."Id" JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" WHERE p."Id" = $1',[req.params.playlistId]);
+    const result = await query('SELECT s.*, a."ArtistName", p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", u."UserName" FROM public."Songs" AS s JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" JOIN public."PlaylistDetails" AS pd ON s."songId" = pd."songId" JOIN public."Playlist" AS p ON pd."playlistId" = p."Id" JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" WHERE p."Id" = $1 ORDER BY pd."id" DESC',[req.params.playlistId]);
     res.status(200).send(result.rows);
   } catch(err) {
     console.error(err);
     res.status(500).send();
   }
-})
-
-//Sidebar call
-app.get('/sidebar', async(req,res)=>{
-  
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.sendStatus(401); // Unauthorized
-  }
-
-  try {
-    const decoded:any = jwt.verify(token, JWT_SECRET);
-    console.log(decoded.userId);
-    
-    const resp = await query('SELECT "UserName" FROM "UserList" WHERE "UserId"=$1',[decoded.userId]);
-    return res.status(200).send(resp.rows);
-
-  } catch (err) {
-    console.error('Token verification error:', err);
-    // return res.sendStatus(403); // Forbidden
-  }
-
 })
 
 
@@ -242,6 +253,7 @@ app.post('/login', async(req,res)=>{
   }
 })
 
+
 //signup api
 app.post('/signup', async(req,res)=>{
 
@@ -275,8 +287,3 @@ app.post('/signup', async(req,res)=>{
 app.listen('8080',()=>{
     console.log('Server is running on port 8080');
 })
-
-
-// Artists in single playlist
-
-

@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { PiVinylRecord } from 'react-icons/pi'
 import { MdKeyboardArrowDown } from "react-icons/md";
 import MiniSeekbar from '../Seekbar/Mini Seekbar/MiniSeekbar';
 import MiniControls from '../Controls/Mini Controls/MiniControls';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDuration, setMiniplayer, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
+import { setDuration, setMiniplayer, setMusicSeek, setPlay, setSongInfo, togglePlay } from '../../Slices/musicPlayerSlice';
 import { QueueState, Song, musicPlayerState } from '../../Types/types';
 import { addToShuffledQueue, clearShuffledQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import { CiHeart } from "react-icons/ci";
-import { MdOutlineLibraryAdd } from "react-icons/md";
 import fetchSongUrl from '../../Functions/fetchSongUrl';
 import { CgPlayListAdd } from "react-icons/cg";
+import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
 
 
 const MiniPlayer = () => {
@@ -159,7 +159,7 @@ const MiniPlayer = () => {
     }, [play, duration, dispatch]);
 
     const seeker = (event:any) => {
-        if(song.mp3!==null){
+      if(song.mp3!==null){
             var div:any = document.querySelector('.miniseek');
             var rect = div.getBoundingClientRect();
             var x = event.clientX - rect.left;
@@ -204,6 +204,13 @@ const MiniPlayer = () => {
         }
     }, [song.mp3]);
 
+    const addToPlaylist = () => {
+      if(song.mp3){
+        dispatch(togglePopup());
+        dispatch(setSongId(song.id));
+      }
+    }
+
   return (
     <div className={`fixed z-10 text-white bottom-0 right-0 flex items-center px-4 justify-between bg-black w-full h-[8%] ${miniplayer === 'max' && 'hidden'}`}>
         
@@ -226,7 +233,7 @@ const MiniPlayer = () => {
       
       <div className='flex items-center gap-[2rem] text-2xl'>
         <CiHeart className='cursor-pointer'/>
-        <CgPlayListAdd className='cursor-pointer'/>
+        <CgPlayListAdd className='cursor-pointer' onClick={addToPlaylist}/>
       </div>
 
       <p className='text-2xl cursor-pointer rotate-180 transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'max'}))}><MdKeyboardArrowDown/></p>

@@ -55,7 +55,7 @@ const Songs = () => {
       </div>
       <div className='w-full h-[18rem] flex flex-col gap-2 mt-[1rem]'>
         {
-          songsList.slice(0,5).map((item, index)=>{
+          songsList.slice(3,8).map((item, index)=>{
               return(
                 <SongTemplate dropdown={dropdown} setDropdown={setDropdown} toggleDropDown={toggleDropDown} key={index} index={index} song={item}/>
               )
@@ -127,15 +127,17 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
             <div className='p-[0.5rem] relative hover:bg-[#80808040] rounded-full' onClick={(e)=>toggleDropDown(index, e)}>
               <IoMdMore className='text-xl'/>
               { dropdown===index &&
-                <div className='absolute w-[10rem] left-[-10rem] top-0 rounded-lg overflow-hidden bg-black'>
+              <div className='absolute w-[10rem] left-[-10rem] top-0 rounded-lg overflow-hidden bg-black'>
                 {
                   songsDropDown.map((item, index)=>{
-                    return (
-                      <p key={index} className='w-full text-xs gap-4 px-[1rem] h-[3rem] flex items-center hover:bg-[#80808040]' onClick={(event) => item.function === 'atq' ? addToQueue(event) : item.function==='stp' && addToPlaylist()}>
-                        <item.icon className='text-xl'/>
-                        {item.name}
-                      </p>
-                    )
+                    if(index<3){
+                      return (
+                        <p key={index} className='w-full text-xs gap-4 px-[1rem] h-[3rem] flex items-center hover:bg-[#80808040]' onClick={(event) => item.function === 'atq' ? addToQueue(event) : item.function==='stp' && addToPlaylist()}>
+                          <item.icon className='text-xl'/>
+                          {item.name}
+                        </p>
+                      )
+                    }
                   })
                 }
               </div>
