@@ -28,7 +28,11 @@ const MiniPlayer = () => {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
           artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
-          mp3: null
+          lyrics: shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
+          urls: {
+            mp3:null,
+            cover: null,
+          },
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
       }))
@@ -38,7 +42,8 @@ const MiniPlayer = () => {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
           artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
-          mp3: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
+          lyrics: shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
+          urls: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
       }))
@@ -159,7 +164,7 @@ const MiniPlayer = () => {
     }, [play, duration, dispatch]);
 
     const seeker = (event:any) => {
-      if(song.mp3!==null){
+      if(song.urls.mp3!==null){
             var div:any = document.querySelector('.miniseek');
             var rect = div.getBoundingClientRect();
             var x = event.clientX - rect.left;
@@ -196,16 +201,16 @@ const MiniPlayer = () => {
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.pause();
-            audioRef.current.src = song.mp3;
+            audioRef.current.src = song.urls.mp3;
             audioRef.current.load();
             audioRef.current.play().catch(error => {
                 console.error('Error playing audio:', error);
             });
         }
-    }, [song.mp3]);
+    }, [song.urls.mp3]);
 
     const addToPlaylist = () => {
-      if(song.mp3){
+      if(song.urls.mp3){
         dispatch(togglePopup());
         dispatch(setSongId(song.id));
       }
@@ -216,7 +221,7 @@ const MiniPlayer = () => {
         
         <div className='flex items-center w-[15%]'>
             <div className='grid place-items-center'>
-                <p className='p-[0.5rem] bg-white text-black rounded-lg text-3xl grid place-items-center'><PiVinylRecord /></p>
+            <div className='w-[2.7rem] h-[2.7rem] bg-white text-black grid place-items-center text-3xl'>{song.urls.cover ? <img src={song.urls.cover} alt="Cover Image" className='w-full h-full'/> :<PiVinylRecord/>}</div>
             </div>
         
             <div className='w-full ml-[1rem]'>

@@ -50,7 +50,7 @@ app.get('/home-artists', (req, res) => __awaiter(void 0, void 0, void 0, functio
 //Artist details page
 app.get('/artist/:artistId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, db_1.default)('SELECT a.*, s."songId", s."songName", s."duration" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" WHERE a."ArtistId" = $1', [req.params.artistId]);
+        const result = yield (0, db_1.default)('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" WHERE a."ArtistId" = $1', [req.params.artistId]);
         console.log(result.rows);
         res.status(200).send(result.rows);
     }
@@ -164,31 +164,132 @@ app.get('/home-playlists', (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 //get song from firebase
 app.get('/song/:songId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const songId = req.params.songId;
-    const file = bucket.file(`${songId}.mp3`);
+    var _a;
+    const { songId } = req.params;
     try {
-        const [url] = yield file.getSignedUrl({
-            action: 'read',
-            expires: '03-09-2491'
-        });
-        res.json({ url });
+        const bucket = firebase_admin_1.default.storage().bucket();
+        const prefix = `${songId}/`;
+        const [files] = yield bucket.getFiles({ prefix });
+        if (!files || files.length === 0) {
+            return res.status(404).json({ error: 'Files not found' });
+        }
+        let urls = {
+            mp3: null,
+            cover: null
+        };
+        for (const file of files) {
+            const [url] = yield file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2491',
+            });
+            const extension = (_a = file.name.split('.').pop()) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+            if (extension === 'mp3') {
+                urls.mp3 = url;
+            }
+            else if (extension === 'png' || extension === 'jpg' || extension === 'jpeg' || extension === 'jfif') {
+                urls.cover = url;
+            }
+        }
+        res.status(200).send(urls);
     }
     catch (error) {
-        res.status(500).send(error.message);
+        console.error('Error fetching file URLs:', error);
+        res.status(500).send('Internal server error');
     }
 }));
+//Get song cover from firebase
+app.get('/songCover/:songId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    const { songId } = req.params;
+    try {
+        const bucket = firebase_admin_1.default.storage().bucket();
+        const prefix = `${songId}/`;
+        const [files] = yield bucket.getFiles({ prefix });
+        if (!files || files.length === 0) {
+            return res.status(404).json({ error: 'Files not found' });
+        }
+        let coverUrl;
+        for (const file of files) {
+            const [url] = yield file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2491',
+            });
+            const extension = (_b = file.name.split('.').pop()) === null || _b === void 0 ? void 0 : _b.toLowerCase();
+            if (extension === 'png' || extension === 'jpg' || extension === 'jpeg') {
+                coverUrl = url;
+            }
+        }
+        res.status(200).send(coverUrl);
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+}));
+//Upload folder to firebase
 const storage = multer_1.default.memoryStorage();
 const upload = (0, multer_1.default)({ storage: storage });
-//Upload folder to firebase
-app.post('/upload/:folderName', upload.single('song'), (req, res) => {
-    const folderName = req.params.folderName;
-    console.log('Folder Name:', folderName);
-    // const song = req.file
-    console.log('Form Data:', req.body);
-    console.log('File Data:', req.file);
-    // Send a response with the form data
-    res.status(200).send({ songname: "hi" });
-});
+const multipleUpload = upload.fields([
+    { name: 'song', maxCount: 1 },
+    { name: 'coverImage', maxCount: 1 }
+]);
+app.post('/upload', multipleUpload, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+            const userId = decoded.userId;
+            const result = yield (0, db_1.default)('SELECT * FROM "Artist" WHERE "UserId"=$1', [userId]);
+            if (result.rowCount && result.rowCount > 0) {
+                const song = req.files.song[0];
+                const image = req.files.coverImage[0];
+                const { songName, duration, lyrics } = req.body;
+                const artistId = result.rows[0].ArtistId;
+                const upload = yield (0, db_1.default)('INSERT INTO "Songs"("artistId", "songName", "duration", "lyrics") VALUES ($1, $2, $3, $4) RETURNING "songId"', [artistId, songName, duration, lyrics]);
+                if (upload.rowCount && upload.rowCount > 0) {
+                    const songId = upload.rows[0].songId;
+                    const songBlob = bucket.file(`${songId}/${song.originalname}`);
+                    const imageBlob = bucket.file(`${songId}/${image.originalname}`);
+                    const songUpload = songBlob.createWriteStream({
+                        metadata: {
+                            contentType: song.mimetype,
+                        },
+                    });
+                    const imageUpload = imageBlob.createWriteStream({
+                        metadata: {
+                            contentType: image.mimetype,
+                        },
+                    });
+                    const uploads = [
+                        new Promise((resolve, reject) => {
+                            songUpload.on('error', reject);
+                            songUpload.on('finish', resolve);
+                            songUpload.end(song.buffer);
+                        }),
+                        new Promise((resolve, reject) => {
+                            imageUpload.on('error', reject);
+                            imageUpload.on('finish', resolve);
+                            imageUpload.end(image.buffer);
+                        })
+                    ];
+                    yield Promise.all(uploads);
+                    return res.status(200).send('Files uploaded successfully.');
+                }
+            }
+            else {
+                return res.status(403).send('You are not an artist.');
+            }
+        }
+        catch (err) {
+            console.log(err);
+            res.status(500).send('Error: ', err);
+        }
+    }
+    else {
+        res.status(401).send('No token provided.');
+    }
+}));
 //Get playlist details
 app.get('/playlists/:playlistId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

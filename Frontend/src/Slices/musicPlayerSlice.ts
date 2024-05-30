@@ -5,7 +5,11 @@ const initialState = {
     id: null,
     name: 'Vibify',
     artist: 'Nothing is playing',
-    mp3: null,
+    lyrics: 'Lyrics Not Available',
+    urls: {
+      mp3:null,
+      cover: null
+    },
   },
   miniplayer: 'off',
   songLength: 0,

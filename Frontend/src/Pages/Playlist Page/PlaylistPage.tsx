@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
 import httpClient from '../../httpClient';
-import { PiVinylRecord } from 'react-icons/pi';
 import PlaylistOptions from '../../Components/Playlist Options/PlaylistOptions';
-import { IoMdMore } from "react-icons/io";
-import durationCalculator from '../../Functions/durationCalculator';
 import RelatedPlaylists from '../../Components/Related Playlists/RelatedPlaylists';
 import { useDispatch, useSelector } from 'react-redux';
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
@@ -13,8 +10,8 @@ import { QueueState, Song, musicPlayerState } from '../../Types/types';
 import CommonHeader from '../../Components/Header/CommonHeader';
 import { useLocation, useParams } from 'react-router-dom';
 import fetchSongUrl from '../../Functions/fetchSongUrl';
-import { songsDropDown } from '../../Constants/SongsDropDown';
 import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
+import PlaylistSongs from '../../Components/Playlist Songs/PlaylistSongs';
 
 const PlaylistPage = () => {
 
@@ -59,14 +56,18 @@ const PlaylistPage = () => {
     getSongs();
   },[location, removeFromPlaylist])
 
-  const playSong = async (item:{ArtistName: String, PlaylistId: number, PlaylistName: String, UserName: String, artistId: number, duration: number, songId: number, songName: String}) => {
+  const playSong = async (item:Song) => {
   
       dispatch(setSongInfo({
         song: {
           id: item.songId,
           name: item.songName,
           artist: item.ArtistName,
-          mp3: null
+          lyrics: item.lyrics,
+          urls: {
+            mp3:null,
+            cover: null
+          },
         },
         songLength: item.duration,
       }));
@@ -76,7 +77,8 @@ const PlaylistPage = () => {
           id: item.songId,
           name: item.songName,
           artist: item.ArtistName,
-          mp3: await fetchSongUrl(item.songId),
+          lyrics: item.lyrics,
+          urls: await fetchSongUrl(item.songId),
         },
         songLength: item.duration,
       }));
@@ -133,41 +135,7 @@ const PlaylistPage = () => {
             {
               songs.map((item:Song,index)=>{
                 return (
-                <div key={item.songId} className={`hover:bg-[#80808040] w-full px-[1.5rem] flex items-center h-[4rem] rounded-md text-white cursor-pointer ${song.id === item.songId && 'bg-[#80808040]'}`} onClick={()=>playlistPlay(index)}>
-                  <div className='flex gap-[1.5rem] items-center w-[50%]'>
-                    <p className='text-[2rem] grid place-items-center'><PiVinylRecord/></p>
-                    <p className='w-[35%]'>{item.songName}</p>
-                    <p className='opacity-65'>{item.ArtistName}</p>
-                  </div>
-                  <p className='ml-auto'>{durationCalculator(item.duration)}</p>
-                  <div className='relative ml-[1.5rem]'>
-                    <p className='p-[0.6rem] rounded-full hover:bg-[#80808040]' onClick={(event)=>toggleDropdown(index, event)}><IoMdMore className='text-xl'/></p>
-                    { dropdown===index &&
-                      <div className='w-[11rem] rounded-lg absolute left-[-11rem] top-0 bg-black overflow-hidden'>
-                        {
-                          songsDropDown.map((dropdownItem, keyIndex)=>{
-                            return (
-                              <div key={keyIndex} className='flex w-full h-[3rem] gap-[1rem] items-center px-[1rem] hover:bg-[#80808040]' 
-                              onClick={(event) =>
-                              {
-                                if(dropdownItem.function === 'atq'){
-                                  addToQueue(index, event);
-                                } else if(dropdownItem.function==='stp') {
-                                  addToPlaylist(index, event);
-                                } else if(dropdownItem.function='rfp'){
-                                  removeFromPlaylist(item.songId, item.PlaylistId, event);
-                                }
-                              }}>
-                                <dropdownItem.icon className='text-xl'/>
-                                <p className='text-xs'>{dropdownItem.name}</p>
-                              </div>
-                            )
-                          })
-                        }
-                      </div>
-                    }
-                  </div>
-                </div>
+                <PlaylistSongs playlistPlay={playlistPlay} removeFromPlaylist={removeFromPlaylist} addToPlaylist={addToPlaylist} addToQueue={addToQueue} item={item} index={index} dropdown={dropdown} toggleDropdown={toggleDropdown}/>
               )})
             }
           </div>

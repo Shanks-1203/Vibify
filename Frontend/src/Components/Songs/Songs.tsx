@@ -9,17 +9,9 @@ import fetchSongUrl from '../../Functions/fetchSongUrl';
 import { IoMdMore } from "react-icons/io";
 import { songsDropDown } from '../../Constants/SongsDropDown';
 import { addMusic, addToShuffledQueue } from '../../Slices/musicQueueSlice';
-import { QueueState } from '../../Types/types';
+import { QueueState, Song } from '../../Types/types';
 import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
-
-
-type songType = {
-    songId:number
-    artistId:number
-    songName:String
-    ArtistName:String
-    duration:number
-}
+import fetchSongCover from '../../Functions/fetchSongCover';
 
 const Songs = () => {
 
@@ -66,10 +58,20 @@ const Songs = () => {
   )
 }
 
-const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggleDropDown:Function, song: songType, index:number}> = ({ dropdown, setDropdown, toggleDropDown, song, index }) => {
+const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggleDropDown:Function, song: Song, index:number}> = ({ dropdown, setDropdown, toggleDropDown, song, index }) => {
 
   const dispatch = useDispatch();
   const {Queue} = useSelector((state:QueueState)=> state.musicQueue)
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+
+  useEffect(()=>{
+    const songFetch = async() => {
+      setCoverUrl(null)
+      const url = await fetchSongCover(song.songId);
+      if(url) setCoverUrl(url);
+    }
+    songFetch()
+  },[song.songId])
 
   const playSong = async () => {
     
@@ -78,7 +80,11 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
         id: song.songId,
         name: song.songName,
         artist: song.ArtistName,
-        mp3: null
+        lyrics: song.lyrics,
+        urls: {
+          mp3:null,
+          cover: null
+        },
       },
       songLength: song.duration,
     }));
@@ -88,7 +94,8 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
         id: song.songId,
         name: song.songName,
         artist: song.ArtistName,
-        mp3: await fetchSongUrl(song.songId),
+        lyrics: song.lyrics,
+        urls: await fetchSongUrl(song.songId),
       },
       songLength: song.duration,
     }));
@@ -117,8 +124,8 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
 
     return (
         <div className='flex items-center gap-[2rem] cursor-pointer py-[0.5rem] w-full text-center text-white hover:bg-gradient-to-r hover:from-[#80808015] hover:via-[#80808060] hover:to-[#80808015]' onClick={playSong}>
-            <div className='w-[2.2rem] h-[2.2rem] rounded-lg text-xl grid text-black place-items-center bg-white'>
-                <PiVinylRecord />
+            <div className='w-[2.2rem] h-[2.2rem] rounded-lg text-xl grid text-black place-items-center bg-white overflow-hidden'>
+                {coverUrl ? <img src={coverUrl} alt="Cover Image" /> : <PiVinylRecord/>}
             </div>
             <p className='font-medium text-left w-[20%] text-xs'>{song.songName}</p>
             <p className='opacity-65 text-xs'>{song.ArtistName}</p>

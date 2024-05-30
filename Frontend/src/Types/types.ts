@@ -7,6 +7,7 @@ export interface Song {
     duration: number
     songId: number
     songName: String
+    lyrics: String
 }
 
 export interface QueueState {
@@ -22,8 +23,12 @@ export interface musicPlayerState {
       song:{
         id: number,
         name:String,
-        artist:String
-        mp3:string
+        artist:String,
+        lyrics: String,
+        urls: {
+          mp3: string
+          cover:string
+        }
       }
       songLength: number,
       miniplayer:String,
@@ -46,4 +51,14 @@ export interface saveToPlaylist {
     popup:Boolean,
     songId: number | null
   }
+}
+
+export interface artistSongs {
+  ArtistId:number, 
+  ArtistName:String, 
+  FollowersCount: number, 
+  songId:number, 
+  songName:String, 
+  duration:number,
+  lyrics:String
 }

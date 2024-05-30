@@ -7,10 +7,7 @@ import query from './db'
 var bodyParser = require('body-parser')
 import dotenv from 'dotenv';
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
-
-
+import stream from 'stream';
 
 
 const app = express();
@@ -49,7 +46,7 @@ app.get('/home-artists', async(req, res) => {
 //Artist details page
 app.get('/artist/:artistId', async(req, res) => {
   try {
-    const result = await query('SELECT a.*, s."songId", s."songName", s."duration" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" WHERE a."ArtistId" = $1',[req.params.artistId]);
+    const result = await query('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" WHERE a."ArtistId" = $1',[req.params.artistId]);
     console.log(result.rows);
     res.status(200).send(result.rows);
   } catch (err) {
@@ -183,30 +180,155 @@ app.get('/home-playlists', async(req,res)=> {
 
 //get song from firebase
 app.get('/song/:songId', async (req, res) => {
-  const songId = req.params.songId;
-  const file = bucket.file(`${songId}.mp3`);
+  const { songId } = req.params;
+
   try {
-    const [url] = await file.getSignedUrl({
-      action: 'read',
-      expires: '03-09-2491'
-    });
-    res.json({ url });
-  } catch (error:any) {
-    res.status(500).send(error.message);
+    const bucket = admin.storage().bucket();
+    const prefix = `${songId}/`;
+
+    const [files] = await bucket.getFiles({ prefix });
+
+    if (!files || files.length === 0) {
+      return res.status(404).json({ error: 'Files not found' });
+    }
+
+    let urls:{mp3:string|null, cover:string|null} = {
+      mp3:null,
+      cover:null
+    };
+
+    for (const file of files) {
+      const [url] = await file.getSignedUrl({
+        action: 'read',
+        expires: '03-09-2491',
+      });
+
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if(extension==='mp3'){
+        urls.mp3 = url;
+      } else if (extension === 'png' || extension === 'jpg' || extension === 'jpeg' || extension === 'jfif'){
+        urls.cover = url
+      }
+    }
+
+    res.status(200).send(urls);
+  } catch (error) {
+    console.error('Error fetching file URLs:', error);
+    res.status(500).send('Internal server error');
   }
 });
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+
+//Get song cover from firebase
+app.get('/songCover/:songId', async (req, res) => {
+  const { songId } = req.params;
+
+  try {
+    const bucket = admin.storage().bucket();
+    const prefix = `${songId}/`;
+
+    const [files] = await bucket.getFiles({ prefix });
+
+    if (!files || files.length === 0) {
+      return res.status(404).json({ error: 'Files not found' });
+    }
+
+    let coverUrl;
+
+    for (const file of files) {
+      const [url] = await file.getSignedUrl({
+        action: 'read',
+        expires: '03-09-2491',
+      });
+
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (extension === 'png' || extension === 'jpg' || extension === 'jpeg'){
+        coverUrl = url
+      }
+    }
+
+    res.status(200).send(coverUrl);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err)
+  }
+})
+
 
 //Upload folder to firebase
-app.post('/upload/', upload.single('song'), (req: any, res: any) => {
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+const multipleUpload = upload.fields([
+  { name: 'song', maxCount: 1 },
+  { name: 'coverImage', maxCount: 1 }
+]);
+app.post('/upload', multipleUpload, async(req: any, res: any) => {
 
-  const song = req.file;
-  const songName = req.body.songName;
-  const duration = req.body.duration;
-  
-  res.status(200).send({songname:"hi"});
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if(token){
+    try {
+      const decoded:any = jwt.verify(token, JWT_SECRET);
+      const userId = decoded.userId;
+      const result = await query('SELECT * FROM "Artist" WHERE "UserId"=$1',[userId]);
+      
+      if(result.rowCount && result.rowCount>0){
+        const song = req.files.song[0];
+        const image = req.files.coverImage[0];
+        const {songName, duration, lyrics} = req.body;
+        const artistId = result.rows[0].ArtistId;
+
+        const upload = await query('INSERT INTO "Songs"("artistId", "songName", "duration", "lyrics") VALUES ($1, $2, $3, $4) RETURNING "songId"', [artistId, songName, duration, lyrics])
+
+        if(upload.rowCount && upload.rowCount>0){
+          const songId = upload.rows[0].songId;
+
+          const songBlob = bucket.file(`${songId}/${song.originalname}`);
+          const imageBlob = bucket.file(`${songId}/${image.originalname}`);
+
+          const songUpload = songBlob.createWriteStream({
+            metadata: {
+              contentType: song.mimetype,
+            },
+          });
+
+          const imageUpload = imageBlob.createWriteStream({
+            metadata: {
+              contentType: image.mimetype,
+            },
+          });
+
+          const uploads = [
+            new Promise((resolve, reject) => {
+              songUpload.on('error', reject);
+              songUpload.on('finish', resolve);
+              songUpload.end(song.buffer);
+            }),
+            new Promise((resolve, reject) => {
+              imageUpload.on('error', reject);
+              imageUpload.on('finish', resolve);
+              imageUpload.end(image.buffer);
+            })
+          ];
+
+          await Promise.all(uploads);
+
+          return res.status(200).send('Files uploaded successfully.');
+        }
+        
+      } else {
+         return res.status(403).send('You are not an artist.');
+      }
+
+    } catch(err) {
+      console.log(err);
+      res.status(500).send('Error: ', err);
+    }
+    
+  } else {
+    res.status(401).send('No token provided.');
+  }
 });
 
 

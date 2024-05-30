@@ -9,12 +9,15 @@ import { setDuration, setMiniplayer, setMusicSeek, setPlay, setSongInfo } from '
 import { setPlayIndex } from '../../Slices/musicQueueSlice'
 import { QueueState, musicPlayerState } from '../../Types/types'
 import fetchSongUrl from '../../Functions/fetchSongUrl'
+import { useState } from 'react'
+import LyricsArea from '../Lyrics Area/LyricsArea'
 
 const FullScreenMusic = () => {
 
     const dispatch = useDispatch();
     const { miniplayer, song, duration, songLength, repeat, shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
     const {Queue, playIndex, shuffledQueue} = useSelector((state:QueueState)=> state.musicQueue)
+    const [tab, setTab] = useState('queue');
 
     const playFromQueue = async(songIndex:number) => {
       dispatch(setPlayIndex(songIndex));
@@ -24,7 +27,11 @@ const FullScreenMusic = () => {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
           artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
-          mp3: null
+          lyrics : shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
+          urls: {
+            mp3:null,
+            cover: null
+          },
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
       }))
@@ -34,7 +41,8 @@ const FullScreenMusic = () => {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
           artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
-          mp3: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
+          lyrics : shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
+          urls: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
       }))
@@ -45,7 +53,7 @@ const FullScreenMusic = () => {
     }
 
     const seeker = (event:any) => {
-      if(song.mp3!==null){
+      if(song.urls.mp3!==null){
         var div:any = document.querySelector('.seek');
         var rect = div.getBoundingClientRect();
         var x = event.clientX - rect.left;
@@ -98,7 +106,7 @@ const FullScreenMusic = () => {
       <div className='flex items-center absolute top-3 right-7'>
             <p className='text-2xl cursor-pointer transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'on'}))}><MdKeyboardArrowDown/></p>
         </div>
-        <div className='w-[15rem] h-[15rem] bg-white text-black grid place-items-center text-[6rem]'><PiVinylRecord/></div>
+        <div className='w-[15rem] h-[15rem] bg-white text-black grid place-items-center text-[6rem]'>{song.urls.cover ? <img src={song.urls.cover} alt="Cover Image" className='w-full h-full'/> :<PiVinylRecord/>}</div>
         <p className='font-semibold mt-[2rem] text-xl'>{song.name}</p>
         <p className='text-sm mt-2 opacity-65'>{song.artist}</p>
         
@@ -110,12 +118,13 @@ const FullScreenMusic = () => {
 
       <div className='w-[40%] text-white rounded-md h-full'>
         <div className='flex gap-[1rem] text-sm h-[7%]'>
-            <p className='p-[0.6rem] cursor-pointer border-t-2 border-[#E76716] text-[#E76716] font-semibold bg-gradient-to-b from-[#E7671660] to-black px-3'>Queue</p>
-            <p className='p-[0.6rem] cursor-pointer'>Lyrics</p>
-            <p className='p-[0.6rem] cursor-pointer'>Artist</p>
+            <p className={`p-[0.6rem] cursor-pointer ${tab === 'queue' && 'border-t-2 border-[#E76716] text-[#E76716] font-semibold bg-gradient-to-b from-[#E7671660] to-black px-3'}`} onClick={()=>setTab('queue')}>Queue</p>
+            <p className={`p-[0.6rem] cursor-pointer ${tab === 'lyrics' && 'border-t-2 border-[#E76716] text-[#E76716] font-semibold bg-gradient-to-b from-[#E7671660] to-black px-3'}`} onClick={()=>setTab('lyrics')}>Lyrics</p>
+            <p className={`p-[0.6rem] cursor-pointer ${tab === 'artists' && 'border-t-2 border-[#E76716] text-[#E76716] font-semibold bg-gradient-to-b from-[#E7671660] to-black px-3'}`} onClick={()=>setTab('artists')}>Artist</p>
         </div>
         <div className={`h-[93%] ${miniplayer==='max' ? 'overflow-y-scroll overflow-x-hidden' : 'overflow-hidden'} queueList`}>
-            <QueueList playFromQueue={playFromQueue}/>
+            {tab === 'queue' && <QueueList playFromQueue={playFromQueue}/>}
+            {tab === 'lyrics' && <LyricsArea/>}
         </div>
       </div>
     </div>
