@@ -6,8 +6,12 @@ import durationCalculator from '../../Functions/durationCalculator';
 const SeekBar = ({seeker}:{seeker:Function}) => {
   
   const { duration, songLength } = useSelector((state:musicPlayerState) => state.musicPlayer);
-  const seek = (duration / songLength)*100
+  let seek = (duration / songLength)*100
   const [hover, setHover] = useState(false);
+
+  if(songLength===0){
+    seek=0
+  }
   
   return (
     <div className='flex text-sm gap-[1rem] justify-center items-center mt-[2rem] relative'>

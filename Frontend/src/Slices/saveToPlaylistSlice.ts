@@ -3,9 +3,11 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState:{
     popup: Boolean,
     songId: number | null
+    createPopup: Boolean
 } = {
     popup: false,
-    songId: null
+    songId: null,
+    createPopup: false,
 }
 
 const saveToPlaylistSlice = createSlice ({
@@ -17,9 +19,12 @@ const saveToPlaylistSlice = createSlice ({
         },
         setSongId(state, action){
             state.songId = action.payload
+        },
+        toggleCreatePopup(state){
+            state.createPopup = !state.createPopup
         }
     }
 })
 
-export const { togglePopup, setSongId } = saveToPlaylistSlice.actions
+export const { togglePopup, setSongId, toggleCreatePopup } = saveToPlaylistSlice.actions
 export default saveToPlaylistSlice.reducer

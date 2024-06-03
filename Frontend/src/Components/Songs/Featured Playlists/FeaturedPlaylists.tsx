@@ -3,11 +3,13 @@ import { BiSolidPlaylist } from "react-icons/bi";
 import httpClient from '../../../httpClient';
 import { IoMdMore } from "react-icons/io";
 import { Link } from 'react-router-dom';
-import { playlistType } from '../../../Types/types';
+import { playlistType, saveToPlaylist } from '../../../Types/types';
+import { useSelector } from 'react-redux';
 
 const FeaturedPlaylists = () => {
 
   const [playlistList, setPlaylistList] = useState([]);
+  const {popup, createPopup} = useSelector((state:saveToPlaylist)=>state.saveToPlaylist)
 
   const playlistFetch = async() => {
     try{
@@ -23,7 +25,7 @@ const FeaturedPlaylists = () => {
   
   useEffect(()=>{
     playlistFetch();
-  },[])
+  },[createPopup, popup])
   
   return (
     <div>

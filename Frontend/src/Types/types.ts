@@ -2,12 +2,24 @@ export interface Song {
     ArtistName: String
     PlaylistId: number
     PlaylistName: String
+    PlaylistLikes: number
     UserName: String
     artistId: number
     duration: number
     songId: number
     songName: String
     lyrics: String
+    isLiked: Boolean
+}
+
+export interface SimpleSongType {
+  songId: number
+  songName: String
+  artistId: number
+  ArtistName: String
+  duration: number
+  lyrics: String
+  isLiked:Boolean
 }
 
 export interface QueueState {
@@ -50,6 +62,7 @@ export interface saveToPlaylist {
   saveToPlaylist: {
     popup:Boolean,
     songId: number | null
+    createPopup:Boolean
   }
 }
 
@@ -60,5 +73,6 @@ export interface artistSongs {
   songId:number, 
   songName:String, 
   duration:number,
-  lyrics:String
+  lyrics:String,
+  isLiked: Boolean
 }

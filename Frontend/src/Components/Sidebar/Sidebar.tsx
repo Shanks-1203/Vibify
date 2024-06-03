@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import logo from '../../Assets/Images/Logo.png'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import routes from '../../Constants/RoutingOptions'
 import { CiHeart } from "react-icons/ci";
 import { GoPin } from "react-icons/go";
 import { FiPlus } from "react-icons/fi";
+import { useDispatch } from 'react-redux';
+import { toggleCreatePopup } from '../../Slices/saveToPlaylistSlice';
 
 const Sidebar = () => {
 
@@ -12,6 +14,7 @@ const Sidebar = () => {
   const [loc, setLoc] = useState<string>('');
   const [loc2, setLoc2] = useState<string>('');
   const location = useLocation();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const pathParts = location.pathname.split('/');
@@ -21,7 +24,7 @@ const Sidebar = () => {
 
   const array = [
     {
-      id: 1,
+      id: 4,
       name: 'The Weeknd Terminal',
     },
     {
@@ -59,8 +62,8 @@ const Sidebar = () => {
             <p className='opacity-60 mb-4 px-4'>Quick Access</p>
             <div className='flex flex-col gap-1'>
               <Link to={'/favorites'}>
-                <div className='flex items-center gap-4 px-4 cursor-pointer py-3 hover:bg-[#ffffff30]'>
-                  <CiHeart className='text-2xl text-red-500'/>
+                <div className={`flex items-center gap-4 px-4 cursor-pointer py-3 hover:bg-[#ffffff30] ${loc === 'favorites' && 'border-l-2 bg-gradient-to-r border-[#E76716] from-[#E7671660] to-black text-[#E76716]'}`}>
+                  <CiHeart className={`text-2xl ${loc!=='favorites' && 'text-red-500'}`}/>
                   <p>Favorites</p>
                 </div>
               </Link>
@@ -90,12 +93,10 @@ const Sidebar = () => {
                   )
                 })
               }
-              <Link to={'/create/playlist'}>
-                <div className='flex items-center gap-4 px-4 cursor-pointer py-3 hover:bg-[#ffffff30]'>
+                <div className='flex items-center gap-4 px-4 cursor-pointer py-3 hover:bg-[#ffffff30]' onClick={()=>dispatch(toggleCreatePopup())}>
                   <FiPlus className='text-2xl text-violet-500'/>
                   <p>Create Playlist</p>
                 </div>
-              </Link>
             </div>
           </div>
     </div>

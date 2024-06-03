@@ -3,9 +3,16 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice'
 import { PiVinylRecord } from 'react-icons/pi'
 import fetchSongUrl from '../../Functions/fetchSongUrl'
-import { artistSongs } from '../../Types/types'
+import { QueueState, artistSongs } from '../../Types/types'
 import { useEffect, useState } from 'react'
 import fetchSongCover from '../../Functions/fetchSongCover'
+import { FaHeart, FaRegHeart } from 'react-icons/fa6'
+import { CiHeart } from 'react-icons/ci'
+import { IoMdMore } from 'react-icons/io'
+import { songsDropDown } from '../../Constants/SongsDropDown'
+import { addMusic, addToShuffledQueue } from '../../Slices/musicQueueSlice'
+import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice'
+import { like, unlike } from '../../Functions/manageLike'
 
 export const ListenNowBtn = () => {
   return (
@@ -15,7 +22,7 @@ export const ListenNowBtn = () => {
   )
 }
 
-export const PopularSongs = ({songs}:{songs: artistSongs[]}) => {
+export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, setDropdown}:{setLikeTrigger:Function, toggleDropDown:Function, songs: artistSongs[], dropdown:number|null, setDropdown:Function}) => {
     
     const dispatch = useDispatch()
 
@@ -60,7 +67,7 @@ export const PopularSongs = ({songs}:{songs: artistSongs[]}) => {
                 {
                     songs.map((item, index)=>{
                         return(
-                            <ArtistSongTemplate item={item} index={index} playSong={playSong}/>
+                            <ArtistSongTemplate setLikeTrigger={setLikeTrigger} key={index} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} item={item} index={index} playSong={playSong}/>
                         )
                     })
                 }
@@ -69,9 +76,11 @@ export const PopularSongs = ({songs}:{songs: artistSongs[]}) => {
     )
 }
 
-const ArtistSongTemplate = ({item, index, playSong}:{item:artistSongs, index:number, playSong:Function}) => {
+const ArtistSongTemplate = ({setLikeTrigger, item, index, playSong, dropdown, setDropdown, toggleDropDown}:{setLikeTrigger:Function, item:artistSongs, index:number, playSong:Function, dropdown:number|null, setDropdown:Function, toggleDropDown:Function}) => {
   
   const [songCover, setSongCover] = useState<string | null>(null)
+  // const {Queue} = useSelector((state:QueueState)=> state.musicQueue)
+  const dispatch = useDispatch();
 
   useEffect(()=>{
     const songFetch = async() => {
@@ -81,9 +90,24 @@ const ArtistSongTemplate = ({item, index, playSong}:{item:artistSongs, index:num
     }
     songFetch()
   },[item.songId])
+
+  const addToQueue = (event:any) => {
+    event.stopPropagation();
+    // dispatch(addMusic(item));
+    // if(Queue.length===0){
+    //   playSong(item);
+    // }
+    // dispatch(addToShuffledQueue(item));
+    // setDropdown(null)
+  }
+
+  const addToPlaylist = () => {
+    dispatch(togglePopup());
+    dispatch(setSongId(item?.songId));
+  }
   
   return (
-    <div key={item.songId} className='w-full cursor-pointer py-[0.8rem] rounded-md flex justify-between text-sm hover:bg-[#80808040] items-center text-white px-[2rem]' onClick={()=>playSong(item)}>
+    <div className='w-full cursor-pointer py-[0.8rem] rounded-md flex justify-between text-sm hover:bg-[#80808040] items-center text-white px-[2rem]' onClick={()=>playSong(item)}>
         <div className='flex items-center gap-[2rem]'>
             <p>{index+1}</p>
             <p className='w-[2.5rem] h-[2.5rem] text-[2rem] grid place-items-center rounded-lg overflow-hidden'>
@@ -91,7 +115,29 @@ const ArtistSongTemplate = ({item, index, playSong}:{item:artistSongs, index:num
             </p>
             <p>{item.songName}</p>
         </div>
-        <p className='text-sm'>{durationCalculator(item.duration)}</p>
+        <div className='flex items-center'>
+        <p className='text-[1.04rem] ml-auto'>{item.isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>unlike(e, item.songId, setLikeTrigger)}/> : <FaRegHeart className='opacity-65' onClick={(e)=>like(e, item.songId, setLikeTrigger)}/>}</p>
+          <p className='text-sm mx-[3rem]'>{durationCalculator(item.duration)}</p>
+          <div className='p-[0.5rem] relative hover:bg-[#80808040] rounded-full' onClick={(e)=>toggleDropDown(index, e)}>
+              <IoMdMore className='text-xl'/>
+              { dropdown===index &&
+              <div className='absolute w-[10rem] left-[-10rem] top-0 rounded-lg overflow-hidden z-10 bg-black'>
+                {
+                  songsDropDown.map((item, index)=>{
+                    if(index<3){
+                      return (
+                        <p key={index} className='w-full text-xs gap-4 px-[1rem] h-[3rem] flex items-center hover:bg-[#80808040]' onClick={(event) => item.function === 'atq' ? addToQueue(event) : item.function==='stp' && addToPlaylist()}>
+                          <item.icon className='text-xl'/>
+                          {item.name}
+                        </p>
+                      )
+                    }
+                  })
+                }
+              </div>
+              }
+            </div>
+        </div>
     </div>
   )
 }

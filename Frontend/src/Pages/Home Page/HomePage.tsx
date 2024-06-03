@@ -12,7 +12,6 @@ const HomePage = () => {
 
   const { miniplayer } = useSelector((state:musicPlayerState) => state.musicPlayer);
 
-
   return (
     <>
         <FullScreenMusic/>        

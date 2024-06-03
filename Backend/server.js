@@ -49,14 +49,29 @@ app.get('/home-artists', (req, res) => __awaiter(void 0, void 0, void 0, functio
 }));
 //Artist details page
 app.get('/artist/:artistId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const result = yield (0, db_1.default)('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" WHERE a."ArtistId" = $1', [req.params.artistId]);
-        console.log(result.rows);
-        res.status(200).send(result.rows);
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+            const userId = decoded.userId;
+            const result = yield (0, db_1.default)('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics", CASE WHEN sl."songid" IS NOT NULL THEN TRUE ELSE FALSE END AS "isLiked" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" LEFT JOIN "SongLikes" sl ON s."songId" = sl."songid" AND sl."userid" = $1 WHERE a."ArtistId" = $2;', [userId, req.params.artistId]);
+            res.status(200).send(result.rows);
+        }
+        catch (err) {
+            console.error(err);
+            res.status(500).send();
+        }
     }
-    catch (err) {
-        console.error(err);
-        res.status(500).send();
+    else {
+        try {
+            const result = yield (0, db_1.default)('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" WHERE a."ArtistId" = $1', [req.params.artistId]);
+            res.status(200).send(result.rows);
+        }
+        catch (err) {
+            console.error(err);
+            res.status(500).send();
+        }
     }
 }));
 //Get songs in home page
@@ -77,7 +92,8 @@ app.get('/home-songs', (req, res) => __awaiter(void 0, void 0, void 0, function*
     else {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
-            (0, db_1.default)('SELECT s.*, a."ArtistName" FROM "Songs" s JOIN "Artist" a ON s."artistId" = a."ArtistId"').then((result) => {
+            const userId = decoded.userId;
+            (0, db_1.default)('SELECT s.*, a."ArtistName", CASE WHEN sl."songid" IS NOT NULL THEN TRUE ELSE FALSE END AS "isLiked" FROM "Songs" s JOIN "Artist" a ON s."artistId" = a."ArtistId" LEFT JOIN "SongLikes" sl ON s."songId" = sl."songid" AND sl."userid" = $1', [userId]).then((result) => {
                 res.status(200).send(result.rows);
             });
         }
@@ -139,7 +155,7 @@ app.get('/home-playlists', (req, res) => __awaiter(void 0, void 0, void 0, funct
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) {
         try {
-            const result = yield (0, db_1.default)('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" GROUP BY pl."Id", pl."Name"');
+            const result = yield (0, db_1.default)('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl LEFT JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" GROUP BY pl."Id", pl."Name"');
             res.status(200).send(result.rows);
         }
         catch (err) {
@@ -150,7 +166,7 @@ app.get('/home-playlists', (req, res) => __awaiter(void 0, void 0, void 0, funct
     else {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
-            const result = yield (0, db_1.default)('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" WHERE pl."CreatorId" = $1 GROUP BY pl."Id", pl."Name"', [decoded.userId]);
+            const result = yield (0, db_1.default)('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl LEFT JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" WHERE pl."CreatorId" = $1 GROUP BY pl."Id", pl."Name"', [decoded.userId]);
             res.status(200).send(result.rows);
         }
         catch (err) {
@@ -290,15 +306,110 @@ app.post('/upload', multipleUpload, (req, res) => __awaiter(void 0, void 0, void
         res.status(401).send('No token provided.');
     }
 }));
+//Create playlist
+app.post('/create/playlist', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+            const userId = decoded.userId;
+            const { playlistName } = req.body;
+            const resp = yield (0, db_1.default)('INSERT INTO "Playlist"("Name", "CreatorId") VALUES ($1, $2) RETURNING "Id"', [playlistName, userId]);
+            if (resp.rowCount && resp.rowCount > 0) {
+                res.status(200).send('Playlist created successfully');
+            }
+        }
+        catch (err) {
+            console.log(err);
+            res.status(500).send(err);
+        }
+    }
+}));
 //Get playlist details
 app.get('/playlists/:playlistId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const result = yield (0, db_1.default)('SELECT s.*, a."ArtistName", p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", u."UserName" FROM public."Songs" AS s JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" JOIN public."PlaylistDetails" AS pd ON s."songId" = pd."songId" JOIN public."Playlist" AS p ON pd."playlistId" = p."Id" JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" WHERE p."Id" = $1 ORDER BY pd."id" DESC', [req.params.playlistId]);
-        res.status(200).send(result.rows);
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+            const userId = decoded.userId;
+            const result = yield (0, db_1.default)('SELECT p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", p."Likes" AS "PlaylistLikes", s.*, a."ArtistName", u."UserName", CASE WHEN sl."songid" IS NOT NULL THEN TRUE ELSE FALSE END AS "isLiked" FROM public."Playlist" AS p LEFT JOIN public."PlaylistDetails" AS pd ON p."Id" = pd."playlistId" LEFT JOIN public."Songs" AS s ON pd."songId" = s."songId" LEFT JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" LEFT JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" LEFT JOIN public."SongLikes" AS sl ON s."songId" = sl."songid" AND sl."userid" = $1 WHERE p."Id" = $2 ORDER BY pd."id" DESC', [userId, req.params.playlistId]);
+            res.status(200).send(result.rows);
+        }
+        catch (err) {
+            console.error(err);
+            res.status(500).send();
+        }
     }
-    catch (err) {
-        console.error(err);
-        res.status(500).send();
+    else {
+        try {
+            const result = yield (0, db_1.default)('SELECT p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", p."Likes" AS "PlaylistLikes", s.*, a."ArtistName", u."UserName" FROM public."Playlist" AS p LEFT JOIN public."PlaylistDetails" AS pd ON p."Id" = pd."playlistId" LEFT JOIN public."Songs" AS s ON pd."songId" = s."songId" LEFT JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" LEFT JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" WHERE p."Id" = $1 ORDER BY pd."id" DESC', [req.params.playlistId]);
+            res.status(200).send(result.rows);
+        }
+        catch (err) {
+            console.error(err);
+            res.status(500).send();
+        }
+    }
+}));
+//Get favorite songs
+app.get('/favorites', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+            const userId = decoded.userId;
+            const result = yield (0, db_1.default)('SELECT s."songId", s."songName", s."artistId", a."ArtistName", s."duration", s."lyrics" FROM "SongLikes" sl JOIN "Songs" s ON sl."songid" = s."songId" JOIN "Artist" a ON s."artistId" = a."ArtistId" WHERE sl."userid" = $1 ORDER BY sl."id" DESC', [userId]);
+            res.status(200).send(result.rows);
+        }
+        catch (err) {
+            console.error(err);
+        }
+    }
+    else {
+        res.status(401).send('Token Missing');
+    }
+}));
+//Like song
+app.post('/like/:songId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+            const userId = decoded.userId;
+            const resp = yield (0, db_1.default)('INSERT INTO "SongLikes"("userid","songid") VALUES ($1, $2)', [userId, req.params.songId]);
+            res.status(200).send('Song liked');
+        }
+        catch (err) {
+            console.error(err);
+            res.status(500).send();
+        }
+    }
+    else {
+        res.status(401).send('Unauthorized');
+    }
+}));
+//Unlike song
+app.delete('/unlike/:songId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+            const userId = decoded.userId;
+            const resp = yield (0, db_1.default)('DELETE FROM "SongLikes" WHERE "userid" = $1 AND "songid" = $2', [userId, req.params.songId]);
+            res.status(200).send('Song unliked');
+        }
+        catch (err) {
+            console.error(err);
+            res.status(500).send();
+        }
+    }
+    else {
+        res.status(401).send('Unauthorized');
     }
 }));
 //Login api

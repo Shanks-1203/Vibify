@@ -11,14 +11,18 @@ import { useParams } from 'react-router-dom';
 const ArtistPage =() => {
 
   const {artistId} = useParams();
-
+  const [dropdown, setDropdown] = useState<number | null>(null);
   const [artist, setArtist] = useState([])
+  const [likeTrigger, setLikeTrigger] = useState(false);
   
   const { miniplayer } = useSelector((state:musicPlayerState) => state.musicPlayer);  
 
     const artistFetch = async() => {
+      const token = localStorage.getItem('token')
         try{
-            const resp = await httpClient.get(`/artist/${artistId}`);
+            const resp = await httpClient.get(`/artist/${artistId}`, {
+              headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
             setArtist(resp.data);
         } catch(err) {
             console.error(err);
@@ -27,19 +31,24 @@ const ArtistPage =() => {
 
     useEffect(()=>{
       artistFetch();
-    },[])
+    },[likeTrigger])
+
+    const toggleDropDown = (index:number, event:any) => {
+      event.stopPropagation();
+      setDropdown(dropdown === index ? null : index);
+    }
 
     return (
       <>
         <FullScreenMusic/>
 
-        <div className='w-full h-screen p-[2rem] bg-gradient-to-br'>
+        <div className='w-full h-screen p-[2rem]'>
             <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'}`}>
               {artist ? (
                 <div>
                   <CommonHeader/>
                   <ArtistTemplate artistDetails={artist[0]}/>
-                  <PopularSongs songs={artist}/>
+                  <PopularSongs setLikeTrigger={setLikeTrigger} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} songs={artist}/>
                 </div>
               ) : (
                 <p>Artist not found for id {artistId}</p>

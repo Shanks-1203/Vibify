@@ -21,13 +21,16 @@ const PlaylistPage = () => {
 
   const [songs, setSongs] = useState<Song[]>([])
   const [dropdown, setDropdown] = useState<number | null>(null);
-
-  const { miniplayer, song } = useSelector((state:musicPlayerState) => state.musicPlayer);
+  const [likeTrigger, setLikeTrigger] = useState(false);
+  const { miniplayer } = useSelector((state:musicPlayerState) => state.musicPlayer);
   const { Queue } = useSelector((state:QueueState) => state.musicQueue);
 
   const getSongs = async() => {
+    const token = localStorage.getItem('token')
     try{
-      const resp = await httpClient.get(`/playlists/${playlistId}`)
+      const resp = await httpClient.get(`/playlists/${playlistId}`, {
+        headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
       setSongs(resp.data)
     } catch(err) {
       console.log(err);
@@ -54,7 +57,7 @@ const PlaylistPage = () => {
 
   useEffect(()=>{
     getSongs();
-  },[location, removeFromPlaylist])
+  },[location, removeFromPlaylist, likeTrigger])
 
   const playSong = async (item:Song) => {
   
@@ -123,23 +126,24 @@ const PlaylistPage = () => {
 
       {
         songs &&
-        <div className='w-full p-[2rem] text-white'>
+        <div className={`w-full p-[2rem] text-white ${songs.length < 2 && 'h-screen'}`}>
 
           <CommonHeader/>
           <p className='font-semibold text-xl mt-[2rem]'>{songs[0]?.PlaylistName}</p>
           <p className='mt-[0.5rem] opacity-65 text-xs'>Created by <span className='hover:underline cursor-pointer'>{songs[0]?.UserName}</span></p>
 
-          <PlaylistOptions playlistPlay={playlistPlay}/>
+          <PlaylistOptions likes={songs[0]?.PlaylistLikes} playlistPlay={playlistPlay}/>
 
-          <div className='flex flex-col gap-[1rem] mt-[2rem] text-[0.8rem]'>
+          { songs[0]?.songName && 
+            <div className='flex flex-col gap-[1rem] mt-[2rem] text-[0.8rem]'>
             {
               songs.map((item:Song,index)=>{
                 return (
-                <PlaylistSongs playlistPlay={playlistPlay} removeFromPlaylist={removeFromPlaylist} addToPlaylist={addToPlaylist} addToQueue={addToQueue} item={item} index={index} dropdown={dropdown} toggleDropdown={toggleDropdown}/>
+                <PlaylistSongs setLikeTrigger={setLikeTrigger} key={index} playlistPlay={playlistPlay} removeFromPlaylist={removeFromPlaylist} addToPlaylist={addToPlaylist} addToQueue={addToQueue} item={item} index={index} dropdown={dropdown} toggleDropdown={toggleDropdown}/>
               )})
             }
-          </div>
-          <p className='mt-[3rem] text-center text-xs opacity-65'>You've Reached the end of the list.</p>
+          </div>}
+          <p className='mt-[3rem] text-center text-xs opacity-65'>{songs[0]?.songName ? "You've Reached the end of the list." : 'The Playlist is empty'}</p>
 
             <RelatedPlaylists/>
 

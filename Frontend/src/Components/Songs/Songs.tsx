@@ -4,19 +4,21 @@ import httpClient from '../../httpClient';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import durationCalculator from '../../Functions/durationCalculator';
-import { CiHeart } from "react-icons/ci";
 import fetchSongUrl from '../../Functions/fetchSongUrl';
 import { IoMdMore } from "react-icons/io";
 import { songsDropDown } from '../../Constants/SongsDropDown';
 import { addMusic, addToShuffledQueue } from '../../Slices/musicQueueSlice';
-import { QueueState, Song } from '../../Types/types';
+import { QueueState, SimpleSongType } from '../../Types/types';
 import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
 import fetchSongCover from '../../Functions/fetchSongCover';
+import { FaHeart, FaRegHeart } from "react-icons/fa6";
+import { like, unlike } from '../../Functions/manageLike';
 
 const Songs = () => {
 
   const [songsList, setSongsList] = useState([]);
   const [dropdown, setDropdown] = useState<number | null>(null);
+  const [likeTrigger, setLikeTrigger] = useState(false);
 
   const songFetch = async() => {
     const token = localStorage.getItem('token')
@@ -32,7 +34,7 @@ const Songs = () => {
 
   useEffect(()=> {
     songFetch()
-  },[])
+  },[likeTrigger])
 
   const toggleDropDown = (index:number, event:any) => {
     event.stopPropagation();
@@ -49,7 +51,7 @@ const Songs = () => {
         {
           songsList.slice(3,8).map((item, index)=>{
               return(
-                <SongTemplate dropdown={dropdown} setDropdown={setDropdown} toggleDropDown={toggleDropDown} key={index} index={index} song={item}/>
+                <SongTemplate setLikeTrigger={setLikeTrigger} dropdown={dropdown} setDropdown={setDropdown} toggleDropDown={toggleDropDown} key={index} index={index} song={item}/>
               )
           })
         }
@@ -58,7 +60,7 @@ const Songs = () => {
   )
 }
 
-const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggleDropDown:Function, song: Song, index:number}> = ({ dropdown, setDropdown, toggleDropDown, song, index }) => {
+const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggleDropDown:Function, song: SimpleSongType, index:number, setLikeTrigger:Function}> = ({ setLikeTrigger, dropdown, setDropdown, toggleDropDown, song, index }) => {
 
   const dispatch = useDispatch();
   const {Queue} = useSelector((state:QueueState)=> state.musicQueue)
@@ -129,12 +131,12 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
             </div>
             <p className='font-medium text-left w-[20%] text-xs'>{song.songName}</p>
             <p className='opacity-65 text-xs'>{song.ArtistName}</p>
-            <CiHeart className='text-xl ml-auto'/>
+            <p className='text-[1.04rem] ml-auto'>{song.isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>unlike(e, song.songId, setLikeTrigger)}/> : <FaRegHeart className='opacity-65' onClick={(e)=>like(e, song.songId, setLikeTrigger)}/>}</p>
             <p className='ml-3 text-xs w-[5%]'>{durationCalculator(song.duration)}</p>
             <div className='p-[0.5rem] relative hover:bg-[#80808040] rounded-full' onClick={(e)=>toggleDropDown(index, e)}>
               <IoMdMore className='text-xl'/>
               { dropdown===index &&
-              <div className='absolute w-[10rem] left-[-10rem] top-0 rounded-lg overflow-hidden bg-black'>
+              <div className='absolute w-[10rem] left-[-10rem] top-0 rounded-lg overflow-hidden z-10 bg-black'>
                 {
                   songsDropDown.map((item, index)=>{
                     if(index<3){

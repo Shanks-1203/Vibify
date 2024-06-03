@@ -8,10 +8,8 @@ import { togglePopup } from '../../Slices/saveToPlaylistSlice';
 const SaveToPlaylistPage = () => {
 
     const [playlist, setPlaylist] = useState([]);
-
     const [selected, setSelected] = useState<number[]>([]);
-
-    const {songId} = useSelector((state:saveToPlaylist)=>state.saveToPlaylist)
+    const {songId, popup} = useSelector((state:saveToPlaylist)=>state.saveToPlaylist)
     
     const dispatch = useDispatch();
 
@@ -55,7 +53,7 @@ const SaveToPlaylistPage = () => {
     };
 
   return (
-    <div className='w-full h-screen grid place-items-center fixed'>
+    <div className={`w-full transition-all h-screen grid place-items-center fixed ${popup ? 'scale-100' : 'scale-0'}`}>
         <div className='bg-black w-[30%] rounded-md'>
         <div className='bg-[#80808050] text-white h-full p-[1rem] rounded-md'>
             <p className='text-sm opacity-65'>Save to Playlist</p>
