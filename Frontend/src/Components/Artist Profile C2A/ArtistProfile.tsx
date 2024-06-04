@@ -7,7 +7,6 @@ import { QueueState, artistSongs } from '../../Types/types'
 import { useEffect, useState } from 'react'
 import fetchSongCover from '../../Functions/fetchSongCover'
 import { FaHeart, FaRegHeart } from 'react-icons/fa6'
-import { CiHeart } from 'react-icons/ci'
 import { IoMdMore } from 'react-icons/io'
 import { songsDropDown } from '../../Constants/SongsDropDown'
 import { addMusic, addToShuffledQueue } from '../../Slices/musicQueueSlice'
@@ -79,7 +78,7 @@ export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, s
 const ArtistSongTemplate = ({setLikeTrigger, item, index, playSong, dropdown, setDropdown, toggleDropDown}:{setLikeTrigger:Function, item:artistSongs, index:number, playSong:Function, dropdown:number|null, setDropdown:Function, toggleDropDown:Function}) => {
   
   const [songCover, setSongCover] = useState<string | null>(null)
-  // const {Queue} = useSelector((state:QueueState)=> state.musicQueue)
+  const {Queue} = useSelector((state:QueueState)=> state.musicQueue)
   const dispatch = useDispatch();
 
   useEffect(()=>{
@@ -93,12 +92,12 @@ const ArtistSongTemplate = ({setLikeTrigger, item, index, playSong, dropdown, se
 
   const addToQueue = (event:any) => {
     event.stopPropagation();
-    // dispatch(addMusic(item));
-    // if(Queue.length===0){
-    //   playSong(item);
-    // }
-    // dispatch(addToShuffledQueue(item));
-    // setDropdown(null)
+    dispatch(addMusic(item));
+    if(Queue.length===0){
+      playSong(item);
+    }
+    dispatch(addToShuffledQueue(item));
+    setDropdown(null)
   }
 
   const addToPlaylist = () => {

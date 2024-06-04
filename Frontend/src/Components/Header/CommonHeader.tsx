@@ -4,10 +4,13 @@ import { profileCredentials } from '../../Constants/ProfileCredentials';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MdLogin } from 'react-icons/md';
+import { useDispatch } from 'react-redux';
+import { clearQueue } from '../../Slices/musicQueueSlice';
 
 const CommonHeader = () => {
 
   const [dropdown, setDropdown] = useState(false);
+  const dispatch = useDispatch();
 
   const toggleDropdown = () => {
     setDropdown((prev)=>!prev);
@@ -24,12 +27,12 @@ const CommonHeader = () => {
 
                 profileCredentials.map((item, index)=>{
                   return (
-                    <Link to={`/${item.route}`} key={index} onClick={()=>{item.route==='login' && localStorage.clear()}}>
+                    <a href={`/${item.route}`} key={index} onClick={()=>{item.route==='login' && localStorage.clear()}}>
                       <div className='w-full h-[3rem] hover:bg-[#80808040] flex items-center px-[1rem] gap-[0.6rem]'>
                         <item.icon className='text-lg'/>
                         <p className='text-xs'>{item.name}</p>
                       </div>
-                    </Link>
+                    </a>
                   )
                 }) :
 

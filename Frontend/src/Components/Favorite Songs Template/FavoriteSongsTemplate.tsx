@@ -6,7 +6,7 @@ import { IoMdMore } from 'react-icons/io';
 import { useEffect, useState } from 'react';
 import fetchSongCover from '../../Functions/fetchSongCover';
 
-const FavoriteSongsTemplate = ({item}:{item:SimpleSongType}) => {
+const FavoriteSongsTemplate = ({item, playlistPlay, index}:{item:SimpleSongType, playlistPlay:Function, index:number}) => {
 
   const [songCover, setSongCover] = useState<string | null>(null)
 
@@ -20,7 +20,7 @@ const FavoriteSongsTemplate = ({item}:{item:SimpleSongType}) => {
   },[item.songId])
 
   return (
-    <div className='w-full h-[4rem] gap-[1.5rem] px-[1.5rem] hover:bg-[#80808040] rounded-md cursor-pointer flex justify-between items-center'>
+    <div className='w-full h-[4rem] gap-[1.5rem] px-[1.5rem] hover:bg-[#80808040] rounded-md cursor-pointer flex justify-between items-center' onClick={()=>playlistPlay(index)}>
         <div className='w-[50%] flex items-center gap-[1.5rem]'>
             <p className='w-[3rem] h-[3rem] text-3xl grid place-items-center rounded-lg text-white overflow-hidden'>{songCover ? <img src={songCover} alt="Cover Image" /> :<PiVinylRecord/>}</p>
             <p className='w-[35%]'>{item.songName}</p>

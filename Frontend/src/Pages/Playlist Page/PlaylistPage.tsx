@@ -97,7 +97,7 @@ const PlaylistPage = () => {
     dispatch(clearQueue());
     playSong(songs[songNumber]);
     dispatch(setPlayIndex(0))
-    songs.map((song:{ArtistName: String, PlaylistId: number, PlaylistName: String, UserName: String, artistId: number, duration: number, songId: number, songName: String}, index)=>{
+    songs.map((song:Song, index)=>{
         dispatch(addMusic(song));
         return null;
     })
