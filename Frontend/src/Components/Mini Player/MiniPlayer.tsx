@@ -1,24 +1,27 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PiVinylRecord } from 'react-icons/pi'
 import { MdKeyboardArrowDown } from "react-icons/md";
 import MiniSeekbar from '../Seekbar/Mini Seekbar/MiniSeekbar';
 import MiniControls from '../Controls/Mini Controls/MiniControls';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDuration, setMiniplayer, setMusicSeek, setPlay, setSongInfo, togglePlay } from '../../Slices/musicPlayerSlice';
+import { setDuration, setLiked, setMiniplayer, setMusicSeek, setPlay, setSongInfo, togglePlay } from '../../Slices/musicPlayerSlice';
 import { QueueState, Song, musicPlayerState } from '../../Types/types';
 import { addToShuffledQueue, clearShuffledQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import { CiHeart } from "react-icons/ci";
 import fetchSongUrl from '../../Functions/fetchSongUrl';
 import { CgPlayListAdd } from "react-icons/cg";
 import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
+import { FaHeart, FaRegHeart } from 'react-icons/fa6';
+import { like, unlike } from '../../Functions/manageLike';
 
 
 const MiniPlayer = () => {
 
     const {Queue, shuffledQueue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
     const dispatch = useDispatch();
-    const { miniplayer, duration, play, song, musicSeek, songLength, repeat, shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
+    const { miniplayer, isLiked, duration, play, song, musicSeek, songLength, repeat, shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const [likeTrigger, setLikeTrigger] = useState(false);
     
     const playFromQueue = async(songIndex:number) => {
       dispatch(setPlayIndex(songIndex));
@@ -87,6 +90,14 @@ const MiniPlayer = () => {
           }
       }
     }
+
+    useEffect(()=>{
+      if(song.id===null){
+        dispatch(setLiked(false))
+      } else {
+        dispatch(setLiked(!likeTrigger))
+      }
+    },[likeTrigger])
 
     useEffect(()=>{
         if(repeat==='once'){
@@ -237,7 +248,7 @@ const MiniPlayer = () => {
       <MiniSeekbar seeker={seeker}/>
       
       <div className='flex items-center gap-[2rem] text-2xl'>
-        <CiHeart className='cursor-pointer'/>
+        <p className='text-[1.04rem] ml-auto cursor-pointer'>{isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>unlike(e, song.id, setLikeTrigger)}/> : <FaRegHeart className='opacity-65' onClick={(e:any)=>like(e, song.id, setLikeTrigger)}/>}</p>
         <CgPlayListAdd className='cursor-pointer' onClick={addToPlaylist}/>
       </div>
 

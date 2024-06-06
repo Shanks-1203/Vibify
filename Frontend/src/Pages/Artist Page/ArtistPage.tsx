@@ -5,8 +5,9 @@ import { ListenNowBtn, PopularSongs } from '../../Components/Artist Profile C2A/
 import { useSelector } from 'react-redux';
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
 import CommonHeader from '../../Components/Header/CommonHeader';
-import { musicPlayerState } from '../../Types/types';
+import { artistSongs, musicPlayerState } from '../../Types/types';
 import { useParams } from 'react-router-dom';
+import b64toBlob from '../../Functions/base64ToBlob';
 
 const ArtistPage =() => {
 
@@ -15,7 +16,7 @@ const ArtistPage =() => {
   const [artist, setArtist] = useState([])
   const [likeTrigger, setLikeTrigger] = useState(false);
   
-  const { miniplayer } = useSelector((state:musicPlayerState) => state.musicPlayer);  
+  const { miniplayer, isLiked } = useSelector((state:musicPlayerState) => state.musicPlayer);  
 
     const artistFetch = async() => {
       const token = localStorage.getItem('token')
@@ -23,7 +24,8 @@ const ArtistPage =() => {
             const resp = await httpClient.get(`/artist/${artistId}`, {
               headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
             });
-            setArtist(resp.data);
+            console.log(resp?.data);
+            setArtist(resp?.data);
         } catch(err) {
             console.error(err);
         }
@@ -31,7 +33,7 @@ const ArtistPage =() => {
 
     useEffect(()=>{
       artistFetch();
-    },[likeTrigger])
+    },[likeTrigger, isLiked])
 
     const toggleDropDown = (index:number, event:any) => {
       event.stopPropagation();
@@ -44,14 +46,12 @@ const ArtistPage =() => {
 
         <div className='w-full h-screen p-[2rem]'>
             <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'}`}>
-              {artist ? (
+              {artist && (
                 <div>
                   <CommonHeader/>
                   <ArtistTemplate artistDetails={artist[0]}/>
                   <PopularSongs setLikeTrigger={setLikeTrigger} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} songs={artist}/>
                 </div>
-              ) : (
-                <p>Artist not found for id {artistId}</p>
               )}
             </div>
         </div>
@@ -60,11 +60,26 @@ const ArtistPage =() => {
     
 };
 
-const ArtistTemplate = ({artistDetails}:{artistDetails:{ArtistId:number,ArtistName:String,FollowersCount:number}}) => {
+const ArtistTemplate = ({artistDetails}:{artistDetails:artistSongs}) => {
+  
+  const [profile, setProfile] = useState('');
+  
+  useEffect(() => {
+    if (artistDetails?.ProfilePicture) {
+      try {
+        const profilePicBlob = b64toBlob(artistDetails.ProfilePicture, 'image/jpeg');
+        const imageUrl = URL.createObjectURL(profilePicBlob);
+        setProfile(imageUrl);
+      } catch (err) {
+        console.error('Error creating blob:', err);
+      }
+    }
+  }, [artistDetails]);
+  
   return(
     <div>
       <div className='flex mt-[2rem] items-center'>
-        <div className='w-[8rem] h-[8rem] rounded-full bg-white text-black text-[3rem] grid place-items-center'><FaUser/></div>
+        <div className='w-[10rem] h-[10rem] rounded-full bg-white text-black text-[3rem] grid place-items-center overflow-hidden'>{profile ? <img src={profile} alt="Artist Image" className='w-full h-full' /> : <FaUser />}</div>
         <div className='text-white ml-[2rem]'>
           <h1 className='font-semibold text-xl grid place-items-center text-white'>{artistDetails?.ArtistName}</h1>
           <p className='mt-3 opacity-75 text-sm'>{artistDetails?.FollowersCount} Followers</p>

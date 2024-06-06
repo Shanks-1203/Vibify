@@ -11,6 +11,7 @@ const initialState = {
       cover: null
     },
   },
+  isLiked: false,
   miniplayer: 'off',
   songLength: 0,
   play:false,
@@ -49,8 +50,11 @@ const musicPlayerSlice = createSlice({
     setRepeat(state, action) {
       state.repeat = action.payload.repeat;
     },
+    setLiked(state, action){
+      state.isLiked = action.payload;
+    }
   },
 });
 
-export const { setSongInfo, togglePlay, setMiniplayer, setPlay, setMusicSeek, setDuration,setRepeat, toggleShuffle } = musicPlayerSlice.actions;
+export const { setSongInfo, togglePlay, setMiniplayer, setPlay, setMusicSeek, setDuration,setRepeat, toggleShuffle, setLiked } = musicPlayerSlice.actions;
 export default musicPlayerSlice.reducer;

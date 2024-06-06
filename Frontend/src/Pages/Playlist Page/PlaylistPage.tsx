@@ -4,7 +4,7 @@ import PlaylistOptions from '../../Components/Playlist Options/PlaylistOptions';
 import RelatedPlaylists from '../../Components/Related Playlists/RelatedPlaylists';
 import { useDispatch, useSelector } from 'react-redux';
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
-import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
+import { setDuration, setLiked, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import { addMusic, addToShuffledQueue, clearQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import { QueueState, Song, musicPlayerState } from '../../Types/types';
 import CommonHeader from '../../Components/Header/CommonHeader';
@@ -21,8 +21,8 @@ const PlaylistPage = () => {
 
   const [songs, setSongs] = useState<Song[]>([])
   const [dropdown, setDropdown] = useState<number | null>(null);
+  const { miniplayer, isLiked } = useSelector((state:musicPlayerState) => state.musicPlayer);
   const [likeTrigger, setLikeTrigger] = useState(false);
-  const { miniplayer } = useSelector((state:musicPlayerState) => state.musicPlayer);
   const { Queue } = useSelector((state:QueueState) => state.musicQueue);
 
   const getSongs = async() => {
@@ -57,7 +57,7 @@ const PlaylistPage = () => {
 
   useEffect(()=>{
     getSongs();
-  },[location, removeFromPlaylist, likeTrigger])
+  },[location, removeFromPlaylist, likeTrigger, isLiked])
 
   const playSong = async (item:Song) => {
   
@@ -86,6 +86,7 @@ const PlaylistPage = () => {
         songLength: item.duration,
       }));
   
+      dispatch(setLiked(item.isLiked))
       dispatch(setPlay({play:true}));
       dispatch(setMusicSeek({seek:0}));
       dispatch(setDuration({duration:0}));

@@ -42,6 +42,7 @@ export interface musicPlayerState {
           cover:string
         }
       }
+      isLiked:Boolean
       songLength: number,
       miniplayer:String,
       play:Boolean,
@@ -74,5 +75,22 @@ export interface artistSongs {
   songName:String, 
   duration:number,
   lyrics:String,
-  isLiked: Boolean
+  isLiked: Boolean,
+  ProfilePicture: string,
+  UserId:number
 }
+
+export interface profileDetails {
+  profileDetails: {
+    userProfileName:String | null,
+    profilePic:string | null
+  }
+}
+
+export type artistType = {
+  ArtistId:number
+  ArtistName:String
+  FollowersCount: number
+  UserId:number
+  ProfilePicture:Buffer
+};

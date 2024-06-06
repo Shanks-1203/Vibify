@@ -7,8 +7,6 @@ import query from './db'
 var bodyParser = require('body-parser')
 import dotenv from 'dotenv';
 import multer from 'multer';
-import stream from 'stream';
-
 
 const app = express();
 const serviceAccount = require('../../../Users/Divum/Documents/serviceAccountKey.json');
@@ -34,8 +32,17 @@ if (!JWT_SECRET) {
 //Get artists in home page
 app.get('/home-artists', async(req, res) => {
     try {
-      const result = await query('SELECT * FROM "Artist"');
-      res.status(200).send(result.rows);
+      const result = await query('SELECT a.*, u."ProfilePicture" FROM "Artist" a JOIN "UserList" u ON a."UserId" = u."UserId"');
+      
+      const processedRows = result.rows.map(row => {
+        if (row.ProfilePicture) {
+            row.ProfilePicture = row.ProfilePicture.toString('base64');
+        }
+        return row;
+      });
+
+      res.status(200).send(processedRows);
+
     } catch (err) {
       console.error(err);
       res.status(500).send();
@@ -53,16 +60,34 @@ app.get('/artist/:artistId', async(req, res) => {
       const decoded:any = jwt.verify(token, JWT_SECRET);
       const userId = decoded.userId;
 
-      const result = await query('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics", CASE WHEN sl."songid" IS NOT NULL THEN TRUE ELSE FALSE END AS "isLiked" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" LEFT JOIN "SongLikes" sl ON s."songId" = sl."songid" AND sl."userid" = $1 WHERE a."ArtistId" = $2;',[userId, req.params.artistId]);
-      res.status(200).send(result.rows);
+      const result = await query('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics", u."ProfilePicture", CASE WHEN sl."songid" IS NOT NULL THEN TRUE ELSE FALSE END AS "isLiked" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" LEFT JOIN "SongLikes" sl ON s."songId" = sl."songid" AND sl."userid" = $1 JOIN "UserList" u ON a."UserId" = u."UserId" WHERE a."ArtistId" = $2;',[userId, req.params.artistId]);
+      
+      const processedRows = result.rows.map(row => {
+        if (row.ProfilePicture) {
+            row.ProfilePicture = row.ProfilePicture.toString('base64');
+        }
+        return row;
+      });
+
+      res.status(200).send(processedRows);
+
     } catch (err) {
       console.error(err);
       res.status(500).send();
     }
   } else {
     try{
-      const result = await query('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" WHERE a."ArtistId" = $1',[req.params.artistId]);
-      res.status(200).send(result.rows);
+      const result = await query('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics", u."ProfilePicture" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" JOIN "UserList" u ON a."UserId" = u."UserId" WHERE a."ArtistId" = 1',[req.params.artistId]);
+      
+      const processedRows = result.rows.map(row => {
+        if (row.ProfilePicture) {
+            row.ProfilePicture = row.ProfilePicture.toString('base64');
+        }
+        return row;
+      });
+
+      res.status(200).send(processedRows);
+
     } catch(err){
       console.error(err);
       res.status(500).send();
@@ -347,6 +372,63 @@ app.post('/upload', multipleUpload, async(req: any, res: any) => {
   }
 });
 
+//edit user profile
+app.post('/edit/profile', upload.single('profilePicture'), async(req,res)=>{
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if(token){
+    try{
+      const decoded:any = jwt.verify(token, JWT_SECRET);
+      const userId = decoded.userId;
+      const {userName} = req.body;
+
+      const profileBuffer = req.file ? req.file.buffer : null;
+
+      const result = await query('UPDATE "UserList" SET "ProfilePicture" = $1, "UserName" = $2 WHERE "UserId" = $3',[profileBuffer, userName, userId]);
+      res.status(200).send('Profile Updated Successfully');
+    } catch(err){
+      console.log(err);
+      res.status(500).send(err)
+    }
+  } else {
+    res.status(401).send('unauthorized');
+  }
+})
+
+//Get user profile
+app.get('/profile', async(req,res)=>{
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if(token){
+    try{
+      const decoded:any = jwt.verify(token, JWT_SECRET);
+      const userId = decoded.userId;
+
+      const result = await query('SELECT "UserName", "ProfilePicture" FROM "UserList" WHERE "UserId" = $1',[userId])
+      const user = result.rows[0];
+      const profilePicBuffer = user.ProfilePicture;
+
+      if(profilePicBuffer){
+        res.json({
+             userName: user.UserName,
+             profilePic: profilePicBuffer.toString('base64')
+         });
+      } else {
+        res.json({
+          userName: user.UserName,
+          profilePic: null
+      });
+      }
+    } catch(err) {
+      console.log(err);
+      res.status(500).send(err);
+    }
+  } else {
+    res.status(401).send('unauthorized');
+  }
+})
 
 //Create playlist
 app.post('/create/playlist',async(req,res)=>{
