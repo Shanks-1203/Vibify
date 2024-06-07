@@ -430,6 +430,27 @@ app.get('/profile', async(req,res)=>{
   }
 })
 
+//Get Pinned Playlist in sidebar
+app.get('/pins', async(req,res)=>{
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if(token){
+    try{
+      const decoded:any = jwt.verify(token, JWT_SECRET);
+      const userId = decoded.userId;
+
+      const result = await query('SELECT pl."pinPlaylist" AS "id", p."Name" AS "name" FROM "PinList" pl JOIN "Playlist" p ON pl."pinPlaylist" = p."Id" WHERE pl."pinUser" = $1',[userId]);
+      res.status(200).send(result.rows);
+    } catch(err) {
+      console.log(err);
+      res.status(500).send(err);
+    }
+  } else {
+    res.status(401).send('unauthorized');
+  }
+})
+
 //Create playlist
 app.post('/create/playlist',async(req,res)=>{
 

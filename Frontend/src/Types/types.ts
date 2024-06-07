@@ -36,7 +36,7 @@ export interface musicPlayerState {
         id: number,
         name:String,
         artist:String,
-        lyrics: String,
+      lyrics: String | null,
         urls: {
           mp3: string
           cover:string

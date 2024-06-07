@@ -7,6 +7,8 @@ import { GoPin } from "react-icons/go";
 import { FiPlus } from "react-icons/fi";
 import { useDispatch } from 'react-redux';
 import { toggleCreatePopup } from '../../Slices/saveToPlaylistSlice';
+import httpClient from '../../httpClient';
+import { MdOutlineLibraryAdd } from "react-icons/md";
 
 const Sidebar = () => {
 
@@ -15,27 +17,25 @@ const Sidebar = () => {
   const [loc2, setLoc2] = useState<string>('');
   const location = useLocation();
   const dispatch = useDispatch();
+  const [pins, setPins] = useState([]);
+
+  const getPins = async() => {
+    const token = localStorage.getItem('token');
+
+    const resp = await httpClient.get('/pins',{
+      headers: token ? {Authorization: `Bearer ${token}`} : {}
+    })
+
+    console.log(resp.data);
+    setPins(resp.data);
+  }
 
   useEffect(() => {
     const pathParts = location.pathname.split('/');
     setLoc(pathParts[1] || '');
     setLoc2(pathParts[2] || '');
+    getPins();
   }, [location]);
-
-  const array = [
-    {
-      id: 4,
-      name: 'The Weeknd Terminal',
-    },
-    {
-      id: 2,
-      name: 'Anirudh hits',
-    },
-    {
-      id: 3,
-      name: 'Hollywood pop culture',
-    },
-  ]
 
   return (
     <div className='h-screen py-[2rem] flex flex-col text-[0.8rem] gap-[2.5rem] text-white'>
@@ -62,13 +62,14 @@ const Sidebar = () => {
             <p className='opacity-60 mb-4 px-4'>Quick Access</p>
             <div className='flex flex-col gap-1'>
               <Link to={'/favorites'}>
-                <div className={`flex items-center gap-4 px-4 cursor-pointer py-3 hover:bg-[#ffffff30] ${loc === 'favorites' && 'border-l-2 bg-gradient-to-r border-[#E76716] from-[#E7671660] to-black text-[#E76716]'}`}>
-                  <CiHeart className={`text-2xl ${loc!=='favorites' && 'text-red-500'}`}/>
+                <div className={`flex items-center gap-3 px-4 cursor-pointer py-3 hover:bg-[#ffffff30] ${loc === 'favorites' && 'border-l-2 bg-gradient-to-r border-[#E76716] from-[#E7671660] to-black text-[#E76716]'}`}>
+                  <div className='w-[15%]'><CiHeart className={`text-2xl ${loc!=='favorites' && 'text-red-500'}`}/></div>
                   <p>Favorites</p>
                 </div>
               </Link>
+              
               {
-                array.map((item,index)=>{
+                pins.map((item:{id:number, name:String},index)=>{
 
                   const getColorClass = () => {
                     if (loc === 'playlists' && item.id === parseInt(loc2)) {
@@ -85,16 +86,22 @@ const Sidebar = () => {
 
                   return(
                     <Link to={`/playlists/${item.id}`} key={item.id}>
-                      <div key={item.id} className={`flex items-center gap-4 px-4 cursor-pointer py-3 hover:bg-[#ffffff30] ${(loc==='playlists' && parseInt(loc2)===item.id) && 'border-l-2 bg-gradient-to-r border-[#E76716] from-[#E7671660] to-black text-[#E76716]'}`}>
-                      <GoPin className={`text-xl rounded-full ${getColorClass()}`} />
+                      <div key={item.id} className={`flex items-center gap-3 px-4 cursor-pointer py-3 hover:bg-[#ffffff30] ${(loc==='playlists' && parseInt(loc2)===item.id) && 'border-l-2 bg-gradient-to-r border-[#E76716] from-[#E7671660] to-black text-[#E76716]'}`}>
+                        <div className='w-[15%]'><GoPin className={`text-xl rounded-full ${getColorClass()}`} /></div>
                         <p>{item.name}</p>
                       </div>
                     </Link>
                   )
                 })
               }
-                <div className='flex items-center gap-4 px-4 cursor-pointer py-3 hover:bg-[#ffffff30]' onClick={()=>dispatch(toggleCreatePopup())}>
-                  <FiPlus className='text-2xl text-violet-500'/>
+                { pins.length < 3 &&
+                  <div className='flex items-center gap-3 px-4 cursor-pointer py-3 hover:bg-[#ffffff30]'>
+                    <div className='w-[15%]'><FiPlus className='text-2xl rounded-full text-pink-500' /></div>
+                    <p>Add to Quick Access</p>
+                  </div>
+                }
+                <div className='flex items-center gap-3 px-4 cursor-pointer py-3 hover:bg-[#ffffff30]' onClick={()=>dispatch(toggleCreatePopup())}>
+                  <div className='w-[15%]'><MdOutlineLibraryAdd className='text-xl text-violet-500'/></div>
                   <p>Create Playlist</p>
                 </div>
             </div>
