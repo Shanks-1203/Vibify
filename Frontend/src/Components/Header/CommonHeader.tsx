@@ -69,12 +69,12 @@ const CommonHeader = () => {
 
                 profileCredentials.map((item, index)=>{
                   return (
-                    <a href={`/${item.route}`} key={index} onClick={()=>{item.route==='login' && localStorage.clear()}}>
+                    <Link to={`/${item.route}`} key={index} onClick={()=>{item.route==='login' && localStorage.clear()}}>
                       <div className='w-full h-[3rem] hover:bg-[#80808040] flex items-center px-[1rem] gap-[0.6rem]'>
                         <item.icon className='text-lg'/>
                         <p className='text-xs'>{item.name}</p>
                       </div>
-                    </a>
+                    </Link>
                   )
                 }) :
 

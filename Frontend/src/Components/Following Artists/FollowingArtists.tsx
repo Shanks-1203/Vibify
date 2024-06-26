@@ -27,7 +27,7 @@ const FollowingArtists = () => {
   return (
     <div className='h-[50%]'>
       <p className='text-sm flex justify-between items-center'><span className='opacity-65'>Following</span> <LuFilter className={`text-xl cursor-pointer ${filter ? 'text-[#E76716]' : 'opacity-65'}`} onClick={()=>setFilter((prev:Boolean)=>!prev)}/></p>
-      <div className='flex flex-col gap-2 mt-4'>
+      <div className='flex flex-col gap-2 mt-4 overflow-y-scroll h-[85%]'>
         {
             array.map((item) => {
                 return( !filter ?

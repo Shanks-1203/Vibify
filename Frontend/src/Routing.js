@@ -8,6 +8,7 @@ import LibraryPage from './Pages/Library Page/LibraryPage';
 import FavoritesPage from './Pages/Favorites Page/FavoritesPage';
 import ExplorePlaylistPage from './Pages/Explore Playlist/ExplorePlaylistPage';
 import ExploreArtistPage from './Pages/Explore Artist/ExploreArtistPage';
+import ProfilePage from './Pages/Profile Page/ProfilePage';
 
 function Routing() {
   return (
@@ -23,6 +24,7 @@ function Routing() {
           <Route path='/favorites' element={<FavoritesPage/>}/>
           <Route path='/playlists' element={<ExplorePlaylistPage/>}/>
           <Route path='/artists' element={<ExploreArtistPage/>}/>
+          <Route path='/profile' element={<ProfilePage/>}/>
         </Route>
       </Routes>
     </Router>

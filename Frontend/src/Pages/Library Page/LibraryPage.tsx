@@ -105,7 +105,7 @@ const LibraryPage = () => {
         </div>
 
         { !playlists &&
-            <div className='w-full grid place-items-center h-screen absolute top-0 left-0 bg-black  bg-opacity-80 backdrop-blur'>
+            <div className='w-full grid place-items-center h-screen absolute top-0 left-0 bg-black bg-opacity-80 backdrop-blur'>
                 <div className='flex flex-col gap-[1rem] items-center'>
                     <p className='font-md text-lg'>Log in to access your Library</p>
                     <Link to='/login'>
