@@ -22,31 +22,39 @@ var bodyParser = require('body-parser');
 const dotenv_1 = __importDefault(require("dotenv"));
 const multer_1 = __importDefault(require("multer"));
 const app = (0, express_1.default)();
-const serviceAccount = require('../../../Users/Divum/Documents/serviceAccountKey.json');
+const serviceAccount = require('./serviceAccountKey.json');
 app.use((0, cors_1.default)());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 dotenv_1.default.config();
 firebase_admin_1.default.initializeApp({
     credential: firebase_admin_1.default.credential.cert(serviceAccount),
-    storageBucket: 'vibify-b0716.appspot.com'
+    storageBucket: 'vibify-remastered.appspot.com'
 });
 const bucket = firebase_admin_1.default.storage().bucket();
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
     throw new Error('JWT_SECRET is not defined in environment variables');
 }
+const firestore = firebase_admin_1.default.firestore();
 //Get artists in home page
 app.get('/home-artists', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, db_1.default)('SELECT a.*, u."ProfilePicture" FROM "Artist" a JOIN "UserList" u ON a."UserId" = u."UserId"');
-        const processedRows = result.rows.map(row => {
-            if (row.ProfilePicture) {
-                row.ProfilePicture = row.ProfilePicture.toString('base64');
-            }
-            return row;
-        });
-        res.status(200).send(processedRows);
+        const artists = firestore.collection('artists');
+        const snapshot = yield artists.get();
+        const artistData = yield Promise.all(snapshot.docs.map((artistDoc) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b;
+            const artistData = artistDoc.data();
+            const file = bucket.file(`user-profile/${artistData.user_id}.jpg`);
+            const [url] = yield file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2491',
+            });
+            const profile = yield firestore.collection('userList').doc(artistData.user_id).get();
+            const username = (_b = (_a = profile.data()) === null || _a === void 0 ? void 0 : _a.username) !== null && _b !== void 0 ? _b : 'Unknown';
+            return { profileURL: url, artistId: artistDoc.id, followers: artistData.followers, artistName: username };
+        })));
+        res.status(200).send(artistData);
     }
     catch (err) {
         console.error(err);
@@ -198,10 +206,9 @@ app.get('/home-playlists', (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 //get song from firebase
 app.get('/song/:songId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _c;
     const { songId } = req.params;
     try {
-        const bucket = firebase_admin_1.default.storage().bucket();
         const prefix = `${songId}/`;
         const [files] = yield bucket.getFiles({ prefix });
         if (!files || files.length === 0) {
@@ -216,7 +223,7 @@ app.get('/song/:songId', (req, res) => __awaiter(void 0, void 0, void 0, functio
                 action: 'read',
                 expires: '03-09-2491',
             });
-            const extension = (_a = file.name.split('.').pop()) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+            const extension = (_c = file.name.split('.').pop()) === null || _c === void 0 ? void 0 : _c.toLowerCase();
             if (extension === 'mp3') {
                 urls.mp3 = url;
             }
@@ -233,10 +240,9 @@ app.get('/song/:songId', (req, res) => __awaiter(void 0, void 0, void 0, functio
 }));
 //Get song cover from firebase
 app.get('/songCover/:songId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+    var _d;
     const { songId } = req.params;
     try {
-        const bucket = firebase_admin_1.default.storage().bucket();
         const prefix = `${songId}/`;
         const [files] = yield bucket.getFiles({ prefix });
         if (!files || files.length === 0) {
@@ -248,7 +254,7 @@ app.get('/songCover/:songId', (req, res) => __awaiter(void 0, void 0, void 0, fu
                 action: 'read',
                 expires: '03-09-2491',
             });
-            const extension = (_b = file.name.split('.').pop()) === null || _b === void 0 ? void 0 : _b.toLowerCase();
+            const extension = (_d = file.name.split('.').pop()) === null || _d === void 0 ? void 0 : _d.toLowerCase();
             if (extension === 'png' || extension === 'jpg' || extension === 'jpeg') {
                 coverUrl = url;
             }
@@ -509,22 +515,31 @@ app.delete('/unlike/:songId', (req, res) => __awaiter(void 0, void 0, void 0, fu
 app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { loginCredential, password } = req.body;
-        const user = yield (0, db_1.default)('SELECT * FROM "UserList" WHERE "email"=$1 OR "UserList"."UserName"=$1', [loginCredential]);
-        if (user.rows.length > 0) {
-            const userData = user.rows[0];
-            const validPassword = yield bcrypt_1.default.compare(password, userData.password);
-            if (validPassword) {
-                const token = jsonwebtoken_1.default.sign({ userId: userData.UserId }, JWT_SECRET, {
-                    expiresIn: '10h'
-                });
-                res.status(200).send({ token });
-            }
-            else {
-                res.status(401).send('Password not match');
-            }
+        if (!loginCredential || !password) {
+            return res.status(400).send('Email/Username and Password are required');
+        }
+        let query;
+        if (loginCredential.includes('@')) {
+            query = firestore.collection('userList').where('email', '==', loginCredential);
         }
         else {
-            res.status(404).send('User not found');
+            query = firestore.collection('userList').where('username', '==', loginCredential);
+        }
+        const snapshot = yield query.get();
+        if (snapshot.empty) {
+            return res.status(404).send('User not found');
+        }
+        const user = snapshot.docs[0].data();
+        const userId = snapshot.docs[0].id;
+        const validPassword = yield bcrypt_1.default.compare(password, user.password);
+        if (validPassword) {
+            const token = jsonwebtoken_1.default.sign({ userId: userId }, JWT_SECRET, {
+                expiresIn: '10h'
+            });
+            res.status(200).send({ token });
+        }
+        else {
+            res.status(401).send('Password not match');
         }
     }
     catch (err) {
@@ -533,28 +548,52 @@ app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 }));
 //signup api
 app.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { username, email, password } = req.body;
     try {
-        const user = yield (0, db_1.default)('SELECT * FROM "UserList" WHERE "email"=$1', [email]);
-        const userWithName = yield (0, db_1.default)('SELECT * FROM "UserList" WHERE "UserName"=$1', [username]);
-        if (user.rows.length > 0) {
-            res.status(409).send('Email already exist');
+        const { username, email, password } = req.body;
+        if (!username || !password || !email) {
+            return res.status(400).send('Email, Username and Password are required');
         }
-        else {
-            if (userWithName.rows.length > 0) {
-                res.status(409).send('Username already exist');
-            }
-            else {
-                const salt = yield bcrypt_1.default.genSalt(10);
-                const hashedPassword = yield bcrypt_1.default.hash(password, salt);
-                const resp = yield (0, db_1.default)(`INSERT INTO "UserList" ("UserName", "email", "password") VALUES ($1, $2, $3);`, [username, email, hashedPassword]);
-                res.status(200).send('User saved successfully');
-            }
+        const user = firestore.collection('userList').where('email', '==', email);
+        const userWithName = firestore.collection('userList').where('user_name', '==', username);
+        const snapshot = yield user.get();
+        const snapshotWithName = yield userWithName.get();
+        if (!snapshot.empty) {
+            return res.status(404).send('Email already exists');
         }
+        if (!snapshotWithName.empty) {
+            res.status(409).send('Username already exist');
+        }
+        const salt = yield bcrypt_1.default.genSalt(10);
+        const hashedPassword = yield bcrypt_1.default.hash(password, salt);
+        const userRef = yield firestore.collection('userList').add({
+            username,
+            email,
+            password: hashedPassword,
+        });
+        res.status(200).send('User saved successfully');
     }
     catch (err) {
         console.log(err);
         res.status(500).send();
+    }
+}));
+//Dummy api
+app.get('/all-users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const usersCollection = firestore.collection('userList');
+        const snapshot = yield usersCollection.get();
+        if (snapshot.empty) {
+            return res.status(404).send('No users found');
+        }
+        const users = [];
+        snapshot.forEach(doc => {
+            users.push(Object.assign({ id: doc.id }, doc.data()));
+        });
+        res.status(200).send(users);
+    }
+    catch (err) {
+        console.error('Error retrieving users:', err);
+        res.status(500).send('Internal Server Error');
     }
 }));
 //Backend server port

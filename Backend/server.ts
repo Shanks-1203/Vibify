@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 import multer from 'multer';
 
 const app = express();
-const serviceAccount = require('../../../Users/Divum/Documents/serviceAccountKey.json');
+const serviceAccount = require('./serviceAccountKey.json');
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -19,7 +19,7 @@ dotenv.config();
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: 'vibify-b0716.appspot.com'
+  storageBucket: 'vibify-remastered.appspot.com'
 });
 
 const bucket = admin.storage().bucket();
@@ -29,19 +29,33 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in environment variables');
 }
 
+const firestore = admin.firestore();
+
 //Get artists in home page
 app.get('/home-artists', async(req, res) => {
     try {
-      const result = await query('SELECT a.*, u."ProfilePicture" FROM "Artist" a JOIN "UserList" u ON a."UserId" = u."UserId"');
-      
-      const processedRows = result.rows.map(row => {
-        if (row.ProfilePicture) {
-            row.ProfilePicture = row.ProfilePicture.toString('base64');
-        }
-        return row;
-      });
+      const artists = firestore.collection('artists')
 
-      res.status(200).send(processedRows);
+      const snapshot = await artists.get();
+      
+      const artistData = await Promise.all(
+        snapshot.docs.map(async (artistDoc) => {
+          const artistData = artistDoc.data();
+
+          const file = bucket.file(`user-profile/${artistData.user_id}.jpg`);
+          const [url] = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491',
+          });
+
+          const profile = await firestore.collection('userList').doc(artistData.user_id).get();
+          const username = profile.data()?.username ?? 'Unknown';
+  
+          return { profileURL: url, artistId: artistDoc.id, followers: artistData.followers, artistName: username};
+        })
+      );
+
+      res.status(200).send(artistData);
 
     } catch (err) {
       console.error(err);
@@ -224,7 +238,6 @@ app.get('/song/:songId', async (req, res) => {
   const { songId } = req.params;
 
   try {
-    const bucket = admin.storage().bucket();
     const prefix = `${songId}/`;
 
     const [files] = await bucket.getFiles({ prefix });
@@ -265,7 +278,6 @@ app.get('/songCover/:songId', async (req, res) => {
   const { songId } = req.params;
 
   try {
-    const bucket = admin.storage().bucket();
     const prefix = `${songId}/`;
 
     const [files] = await bucket.getFiles({ prefix });
@@ -574,25 +586,36 @@ app.post('/login', async(req,res)=>{
   try{
 
     const { loginCredential, password } = req.body
+    
+    if (!loginCredential || !password) {
+      return res.status(400).send('Email/Username and Password are required');
+    }
+    
+    let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
 
-    const user = await query('SELECT * FROM "UserList" WHERE "email"=$1 OR "UserList"."UserName"=$1', [loginCredential]);
-
-    if(user.rows.length>0){
-      const userData = user.rows[0];
-
-      const validPassword = await bcrypt.compare(password, userData.password);
-
-      if(validPassword){
-        const token = jwt.sign({ userId: userData.UserId }, JWT_SECRET, {
-          expiresIn: '10h'
-        });
-        res.status(200).send({ token });
-      } else {
-        res.status(401).send('Password not match');
-      }
-
+    if (loginCredential.includes('@')) {
+      query = firestore.collection('userList').where('email', '==', loginCredential);
     } else {
-      res.status(404).send('User not found');
+      query = firestore.collection('userList').where('username', '==', loginCredential);
+    }
+
+    const snapshot = await query.get();
+
+    if (snapshot.empty) {
+      return res.status(404).send('User not found');
+    }
+
+    const user = snapshot.docs[0].data();
+    const userId = snapshot.docs[0].id;
+    const validPassword = await bcrypt.compare(password, user.password);
+    
+    if(validPassword) {
+      const token = jwt.sign({ userId: userId }, JWT_SECRET, {
+         expiresIn: '10h'
+      });
+      res.status(200).send({ token });
+    } else {
+      res.status(401).send('Password not match')
     }
   } catch(err:any){
     res.status(500).send('Internal Server Error');
@@ -603,31 +626,64 @@ app.post('/login', async(req,res)=>{
 //signup api
 app.post('/signup', async(req,res)=>{
 
-  const {username, email, password} = req.body;  
-  
   try{
-    const user = await query('SELECT * FROM "UserList" WHERE "email"=$1', [email]);
-    const userWithName = await query('SELECT * FROM "UserList" WHERE "UserName"=$1', [username]);
+    const {username, email, password} = req.body;
 
-    if(user.rows.length>0){
-      res.status(409).send('Email already exist');
-    } else {
-      if(userWithName.rows.length>0){
-        res.status(409).send('Username already exist');
-      } else {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        
-        const resp = await query(`INSERT INTO "UserList" ("UserName", "email", "password") VALUES ($1, $2, $3);`,[username, email, hashedPassword]);
-        res.status(200).send('User saved successfully');
-      }
+    if (!username || !password || !email) {
+      return res.status(400).send('Email, Username and Password are required');
     }
+    
+    const user = firestore.collection('userList').where('email', '==', email);
+    const userWithName = firestore.collection('userList').where('user_name', '==', username);
+
+    const snapshot = await user.get();
+    const snapshotWithName = await userWithName.get();
+
+    if (!snapshot.empty) {
+      return res.status(404).send('Email already exists');
+    }
+
+    if(!snapshotWithName.empty){
+      res.status(409).send('Username already exist');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const userRef = await firestore.collection('userList').add({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    res.status(200).send('User saved successfully');
   } catch(err){
     console.log(err);
     res.status(500).send();
   }
 })
 
+//Dummy api
+app.get('/all-users', async(req,res)=>{
+  try {
+    const usersCollection = firestore.collection('userList');
+    const snapshot = await usersCollection.get();
+
+    if (snapshot.empty) {
+      return res.status(404).send('No users found');
+    }
+
+    const users: any[] = [];
+    snapshot.forEach(doc => {
+      users.push({ id: doc.id, ...doc.data() });
+    });
+
+    res.status(200).send(users);
+  } catch (err) {
+    console.error('Error retrieving users:', err);
+    res.status(500).send('Internal Server Error');
+  }
+})
 
 //Backend server port
 app.listen('8080',()=>{
