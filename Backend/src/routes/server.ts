@@ -36,6 +36,7 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in environment variables');
 }
 
+
 //Get artists in home page
 app.get('/home-artists', async(req, res) => {
     try {
@@ -69,50 +70,83 @@ app.get('/home-artists', async(req, res) => {
 });
 
 
-//Artist details page
-// app.get('/artist/:artistId', async(req, res) => {
-//   const authHeader = req.headers['authorization'];
-//   const token = authHeader && authHeader.split(' ')[1];
+// Artist details page
+app.get('/artist/:artistId', async(req, res) => {
 
-//   if(token){
-//     try {
-//       const decoded:any = jwt.verify(token, JWT_SECRET);
-//       const userId = decoded.userId;
+  const {artistId} = req.params
+  const {userId} = req.body
 
-//       const result = await query('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics", u."ProfilePicture", CASE WHEN sl."songid" IS NOT NULL THEN TRUE ELSE FALSE END AS "isLiked" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" LEFT JOIN "SongLikes" sl ON s."songId" = sl."songid" AND sl."userid" = $1 JOIN "UserList" u ON a."UserId" = u."UserId" WHERE a."ArtistId" = $2;',[userId, req.params.artistId]);
-      
-//       const processedRows = result.rows.map(row => {
-//         if (row.ProfilePicture) {
-//             row.ProfilePicture = row.ProfilePicture.toString('base64');
-//         }
-//         return row;
-//       });
+  try{
+    const artistDoc = await firestore.collection('artists').doc(artistId).get();
 
-//       res.status(200).send(processedRows);
+    let artistDetails = {
+      artistProfile: '',
+      artistId,
+      artistName: 'Musical Doe',
+      followers: 1000
+    }
 
-//     } catch (err) {
-//       console.error(err);
-//       res.status(500).send();
-//     }
-//   } else {
-//     try{
-//       const result = await query('SELECT a.*, s."songId", s."songName", s."duration", s."lyrics", u."ProfilePicture" FROM "Artist" a JOIN "Songs" s ON a."ArtistId" = s."artistId" JOIN "UserList" u ON a."UserId" = u."UserId" WHERE a."ArtistId" = 1',[req.params.artistId]);
-      
-//       const processedRows = result.rows.map(row => {
-//         if (row.ProfilePicture) {
-//             row.ProfilePicture = row.ProfilePicture.toString('base64');
-//         }
-//         return row;
-//       });
+    let songs = [] as {songId: string, songName: string, duration:number}[]
 
-//       res.status(200).send(processedRows);
+    if(artistDoc.exists){
+      const {user_id, followers} = artistDoc.data() as {user_id: string, followers:number}
+      const artistName = (await firestore.collection('userList').doc(user_id).get()).data()?.username;
 
-//     } catch(err){
-//       console.error(err);
-//       res.status(500).send();
-//     }
-//   }
-// });
+      const extensions = ['jpeg', 'jpg', 'png'];
+      let profileUrl = '';
+
+      for (const ext of extensions) {
+        const profilePic = bucket.file(`user-profile/${user_id}.${ext}`)
+
+        try{
+          const file = await profilePic.getMetadata();
+          const [url] = await profilePic.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491',
+          });
+          profileUrl = url
+          break;
+        } catch(err) {
+          continue
+        }
+      }
+
+      artistDetails = { artistProfile: profileUrl, artistId, artistName, followers }
+
+      const songFetch = await firestore.collection('songs').where('artist_id','==', artistId).get()
+
+      if(!songFetch.empty){
+        songs = await Promise.all(
+          songFetch.docs.map(async(doc) => {
+            const {song_name, duration} = doc.data();
+            let isLiked = false;
+
+            if(userId){
+              const likes = await firestore.collection('song-likes')
+              .where('song_id','==', doc.id)
+              .where('user_id','==', userId)
+              .get()
+
+              isLiked = !likes.empty
+            }
+
+            return {songId: doc.id, songName: song_name, duration, isLiked}
+          })
+        )
+      }
+
+      res.status(200).json({artistDetails, songs})
+
+    } else {
+      res.status(404).send('Artist not found')
+    }
+
+
+  } catch(err) {
+    console.error(err)
+    res.status(500).send('Internal server error')
+  }
+});
 
 
 //Get songs in home page
@@ -152,6 +186,7 @@ app.get('/home-songs', async(req:Request, res:Response) => {
   }
 
 });
+
 
 //Add songs to playlist
 app.post('/saveToPlaylist', async (req, res) => {
@@ -216,30 +251,38 @@ app.post('/saveToPlaylist', async (req, res) => {
 });
 
 
-// //Remove song from playlist
-// app.post('/removeFromPlaylist', async(req,res)=>{
-//   const {playlistId, songId} = req.body;
+//Remove song from playlist
+app.post('/removeFromPlaylist', async(req,res)=>{
+  const {playlistId, songId, userId} = req.body;
 
-//   if (!playlistId || !songId) {
-//     return res.status(400).send({ error: 'Invalid input: selectedPlaylists and songId are required' });
-//   }
+  if(!userId){
+    return res.status(401).send('Login for this action');
+  }
 
-//   try{
-//     const result = await query(
-//       'DELETE FROM "PlaylistDetails" WHERE "playlistId" = $1 AND "songId" = $2 RETURNING *',
-//       [playlistId, songId]
-//     );
+  if (!playlistId || !songId) {
+    return res.status(400).send({ error: 'Invalid input: playlistId and songId are required' });
+  }
 
-//     if (result.rowCount && result.rowCount > 0) {
-//       return res.status(200).send('Song removed from playlist successfully');
-//     } else {
-//       return res.status(404).send({ error: 'Song not found in the specified playlist' });
-//     }
-//   } catch(err) {
-//     console.error(err);
-//     return res.status(500).send({ error: 'An error occurred while removing the song from playlists' });
-//   }
-// })
+  try {
+    const song = await firestore.collection('playlist-songs')
+    .where('playlist_id','==', playlistId)
+    .where('song_id','==', songId)
+    .get()
+
+    if(song.empty){
+      return res.status(404).send('Song not found in playlist');
+    } else {
+      const deletePromises = song.docs.map(doc => doc.ref.delete());
+      await Promise.all(deletePromises);
+
+      res.status(200).send('song removed from playlist successfully');
+    }
+  } catch(err) {
+    console.log(err);
+    res.status(500).send('Internal server error')
+  }
+})
+
 
 // //Get playlists in home page
 // app.get('/home-playlists', async(req,res)=> {
@@ -272,6 +315,7 @@ app.post('/saveToPlaylist', async (req, res) => {
 //   }
 
 // })
+
 
 //get song from firebase
 app.get('/song/:songId', async (req, res) => {
@@ -424,6 +468,7 @@ app.get('/songCover/:songId', async (req, res) => {
 //   }
 // });
 
+
 // //edit user profile
 // app.post('/edit/profile', upload.single('profilePicture'), async(req,res)=>{
 //   const authHeader = req.headers['authorization'];
@@ -448,39 +493,50 @@ app.get('/songCover/:songId', async (req, res) => {
 //   }
 // })
 
-// //Get user profile
-// app.get('/profile', async(req,res)=>{
-//   const authHeader = req.headers['authorization'];
-//   const token = authHeader && authHeader.split(' ')[1];
 
-//   if(token){
-//     try{
-//       const decoded:any = jwt.verify(token, JWT_SECRET);
-//       const userId = decoded.userId;
+//Get user profile
+app.get('/profile', async(req,res)=>{
+  const {userId} = req.body;
 
-//       const result = await query('SELECT "UserName", "ProfilePicture" FROM "UserList" WHERE "UserId" = $1',[userId])
-//       const user = result.rows[0];
-//       const profilePicBuffer = user.ProfilePicture;
+  if(!userId) {
+    return res.status(401).send('Login to view profile');
+  }
 
-//       if(profilePicBuffer){
-//         res.json({
-//              userName: user.UserName,
-//              profilePic: profilePicBuffer.toString('base64')
-//          });
-//       } else {
-//         res.json({
-//           userName: user.UserName,
-//           profilePic: null
-//       });
-//       }
-//     } catch(err) {
-//       console.log(err);
-//       res.status(500).send(err);
-//     }
-//   } else {
-//     res.status(401).send('unauthorized');
-//   }
-// })
+  try{
+    const user = await firestore.collection('userList').doc(userId).get()
+
+    if(user.exists){
+      const userName = user.data()?.username;
+      const extensions = ['jpeg', 'png', 'jpg'];
+      let profileUrl = null;
+
+      for (const ext of extensions) {
+        const profilePic = bucket.file(`user-profile/${userId}.${ext}`)
+
+        try{
+          const file = await profilePic.getMetadata();
+          const [url] = await profilePic.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491',
+          });
+          profileUrl = url
+          break;
+        } catch(err) {
+          continue
+        }
+      }
+
+      return res.status(200).send({ userName, profileUrl });
+
+    } else {
+      return res.status(404).send('User not found');
+    }
+  } catch(err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
+})
+
 
 // //Get Pinned Playlist in sidebar
 // app.get('/pins', async(req,res)=>{
@@ -502,6 +558,7 @@ app.get('/songCover/:songId', async (req, res) => {
 //     res.status(401).send('unauthorized');
 //   }
 // })
+
 
 //Create playlist
 app.post('/create/playlist',async(req,res)=>{
@@ -536,32 +593,68 @@ app.post('/create/playlist',async(req,res)=>{
   }
 })
 
-// //Get playlist details
-// app.get('/playlists/:playlistId', async(req,res)=>{
-//   const authHeader = req.headers['authorization'];
-//   const token = authHeader && authHeader.split(' ')[1];
 
-//   if(token){
-//     try {
-//       const decoded:any = jwt.verify(token, JWT_SECRET);
-//       const userId = decoded.userId;
+//Get playlist details
+app.get('/playlists/:playlistId', async(req,res)=>{
 
-//       const result = await query('SELECT p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", p."Likes" AS "PlaylistLikes", s.*, a."ArtistName", u."UserName", CASE WHEN sl."songid" IS NOT NULL THEN TRUE ELSE FALSE END AS "isLiked" FROM public."Playlist" AS p LEFT JOIN public."PlaylistDetails" AS pd ON p."Id" = pd."playlistId" LEFT JOIN public."Songs" AS s ON pd."songId" = s."songId" LEFT JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" LEFT JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" LEFT JOIN public."SongLikes" AS sl ON s."songId" = sl."songid" AND sl."userid" = $1 WHERE p."Id" = $2 ORDER BY pd."id" DESC',[userId, req.params.playlistId]);
-//       res.status(200).send(result.rows);
-//     } catch(err) {
-//       console.error(err);
-//       res.status(500).send();
-//     }
-//   } else {
-//     try {
-//       const result = await query('SELECT p."Id" AS "PlaylistId", p."Name" AS "PlaylistName", p."Likes" AS "PlaylistLikes", s.*, a."ArtistName", u."UserName" FROM public."Playlist" AS p LEFT JOIN public."PlaylistDetails" AS pd ON p."Id" = pd."playlistId" LEFT JOIN public."Songs" AS s ON pd."songId" = s."songId" LEFT JOIN public."Artist" AS a ON s."artistId" = a."ArtistId" LEFT JOIN public."UserList" AS u ON p."CreatorId" = u."UserId" WHERE p."Id" = $1 ORDER BY pd."id" DESC',[req.params.playlistId]);
-//       res.status(200).send(result.rows);
-//     } catch(err) {
-//       console.error(err);
-//       res.status(500).send();
-//     }
-//   }
-// })
+  const {playlistId} = req.params
+  const {userId} = req.body
+
+  try {
+
+    const playlist = await firestore.collection('playlists').doc(playlistId).get()
+    
+    let playlistDetails = {
+      playlistId: playlistId,
+      playlistName: 'Vibify',
+      creator: 'definitely_not_god',
+      likes : 0
+    }
+
+    let songs: {songId: string, songName: string, duration: number, artistName: string}[] = [];
+
+    if(!playlist.exists){
+      res.status(404).send('Playlist not found')
+    } else {
+      const playlistData = playlist?.data() as { playlist_name: string; user_id: string; likes: number };
+  
+      if (playlistData) {
+        const { playlist_name, user_id, likes } = playlistData;
+        playlistDetails = { playlistId ,playlistName:playlist_name, creator:user_id, likes:likes }
+      }
+
+      const songFetch = await firestore.collection('playlist-songs').where('playlist_id', '==', playlistId).get()
+
+      songs = await Promise.all(
+        songFetch.docs.map(async(doc) => {
+          const { artist_id, duration, song_name } = (await firestore.collection('songs').doc(doc.data().song_id).get()).data() as {artist_id: string, duration: number, song_name:string};
+          let isLiked = false;
+
+          const artistUserId = (await firestore.collection('artists').doc(artist_id).get()).data()?.user_id;
+          const artistName = (await firestore.collection('userList').doc(artistUserId).get()).data()?.username;
+
+          if(userId){
+            const userLiked = await firestore.collection('song-likes')
+            .where('user_id', '==', userId)
+            .where('song_id', '==', doc.data()?.song_id)
+            .get()            
+
+            isLiked = !userLiked.empty
+          }
+
+          return {songId: doc.data()?.song_id, songName: song_name, duration, artistName, isLiked}
+        })
+      )
+    }
+    res.status(200).json({playlistDetails, songs});
+
+
+  } catch(err) {
+    console.log(err)
+    res.status(500).send('Internal server error')
+  }
+})
+
 
 //Get favorite songs
 app.get('/favorites', async(req,res)=>{
@@ -602,6 +695,7 @@ app.get('/favorites', async(req,res)=>{
   
 })
 
+
 //Like song
 app.post('/like/:songId', async(req,res)=>{
   const song_id = req.params.songId
@@ -636,6 +730,7 @@ app.post('/like/:songId', async(req,res)=>{
   }
 })
 
+
 //Unlike song
 app.delete('/like/:songId', async (req: Request, res: Response) => {
   const song_id = req.params.songId;
@@ -664,6 +759,7 @@ app.delete('/like/:songId', async (req: Request, res: Response) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 // Login api
 app.post('/login', async(req,res)=>{
@@ -747,6 +843,7 @@ app.post('/signup', async(req,res)=>{
     res.status(500).send();
   }
 })
+
 
 //Backend server port
 app.listen('8080',()=>{
