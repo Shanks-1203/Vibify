@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setDuration, setLiked, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice'
 import { PiVinylRecord } from 'react-icons/pi'
 import fetchSongUrl from '../../Functions/fetchSongUrl'
-import { QueueState, artistSongs, musicPlayerState } from '../../Types/types'
+import { QueueState, artistDetails, artistSongs, musicPlayerState } from '../../Types/types'
 import { useEffect, useState } from 'react'
 import fetchSongCover from '../../Functions/fetchSongCover'
 import { FaHeart, FaRegHeart } from 'react-icons/fa6'
@@ -21,7 +21,7 @@ export const ListenNowBtn = () => {
   )
 }
 
-export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, setDropdown}:{setLikeTrigger:Function, toggleDropDown:Function, songs: artistSongs[], dropdown:number|null, setDropdown:Function}) => {
+export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, setDropdown, artistDetails}:{setLikeTrigger:Function, toggleDropDown:Function, songs: artistSongs[], dropdown:number|null, setDropdown:Function, artistDetails:artistDetails}) => {
     
     const dispatch = useDispatch()    
 
@@ -31,8 +31,8 @@ export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, s
         song: {
           id: item.songId,
           name: item.songName,
-          artist: item.ArtistName,
-          lyrics: item.lyrics,
+          artist: artistDetails.artistName,
+          // lyrics: item.lyrics,
           urls: {
             mp3:null,
             cover: null,
@@ -45,8 +45,8 @@ export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, s
         song: {
           id: item.songId,
           name: item.songName,
-          artist: item.ArtistName,
-          lyrics: item.lyrics,
+          artist: artistDetails.artistName,
+          // lyrics: item.lyrics,
           urls: await fetchSongUrl(item.songId),
         },
         songLength: item.duration,
@@ -107,14 +107,14 @@ const ArtistSongTemplate = ({setLikeTrigger, item, index, playSong, dropdown, se
     dispatch(setSongId(item?.songId));
   }
 
-  const handleLike = (e:any, songId:number) => {
+  const handleLike = (e:any, songId:string) => {
     like(e, songId, setLikeTrigger);
     if(song.id===songId){
         dispatch(setLiked(!isLiked));
     }
   }
 
-  const handleUnlike = (e:any, songId:number) => {
+  const handleUnlike = (e:any, songId:string) => {
     unlike(e, songId, setLikeTrigger);
     if(song.id===songId){
         dispatch(setLiked(!isLiked));

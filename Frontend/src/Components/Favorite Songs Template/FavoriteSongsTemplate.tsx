@@ -26,7 +26,7 @@ const FavoriteSongsTemplate = ({item, playlistPlay, index}:{item:SimpleSongType,
         <div className='w-[50%] flex items-center gap-[1.5rem]'>
             <p className='w-[3rem] h-[3rem] text-3xl grid place-items-center rounded-lg text-white overflow-hidden'>{songCover ? <img src={songCover} alt="Cover Image" /> :<PiVinylRecord/>}</p>
             <p className='w-[35%]'>{item.songName}</p>
-            <p className='opacity-65'>{item.ArtistName}</p>
+            <p className='opacity-65'>{item.artistName}</p>
         </div>
         <div className='flex items-center'>
             <FaHeart className='text-[1.05rem] text-[#E76716]'/>

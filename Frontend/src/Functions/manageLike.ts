@@ -1,6 +1,6 @@
 import httpClient from "../httpClient";
 
-export const like = async(e:any, songId:number, setLikeTrigger:Function) => {
+export const like = async(e:any, songId:string, setLikeTrigger:Function) => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
     try{
@@ -13,7 +13,7 @@ export const like = async(e:any, songId:number, setLikeTrigger:Function) => {
     }
 }
 
-export const unlike = async(e:any, songId:number, setLikeTrigger:Function) => {
+export const unlike = async(e:any, songId:string, setLikeTrigger:Function) => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
     try{

@@ -1,6 +1,7 @@
 import express, { Request, Response }  from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import path from 'path';
 import admin from 'firebase-admin';
 import cors from 'cors';
 var bodyParser = require('body-parser')
@@ -36,6 +37,13 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in environment variables');
 }
 
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+const multipleUpload = upload.fields([
+  { name: 'song', maxCount: 1 },
+  { name: 'coverImage', maxCount: 1 }
+]);
+
 
 //Get artists in home page
 app.get('/home-artists', async(req, res) => {
@@ -48,16 +56,30 @@ app.get('/home-artists', async(req, res) => {
         snapshot.docs.map(async (artistDoc) => {
           const artistData = artistDoc.data();
 
-          const file = bucket.file(`user-profile/${artistData.user_id}.jpg`);
-          const [url] = await file.getSignedUrl({
-            action: 'read',
-            expires: '03-09-2491',
-          });
+          const extensions = ['jpg', 'jpeg', 'png'];
+          let profileURL;
+
+          for (const ext of extensions){
+
+            const file = bucket.file(`user-profile/${artistData.user_id}.${ext}`);
+            
+            try{
+              await file.getMetadata();
+              const [url] = await file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2491',
+              });
+              profileURL = url
+            } catch(err) {
+              continue;
+            }
+          }
+
 
           const profile = await firestore.collection('userList').doc(artistData.user_id).get();
           const username = profile.data()?.username ?? 'Unknown';
   
-          return { profileURL: url, artistId: artistDoc.id, followers: artistData.followers, artistName: username};
+          return { profileURL, artistId: artistDoc.id, followers: artistData.followers, artistName: username};
         })
       );
 
@@ -74,7 +96,7 @@ app.get('/home-artists', async(req, res) => {
 app.get('/artist/:artistId', async(req, res) => {
 
   const {artistId} = req.params
-  const {userId} = req.body
+  const userId = req.headers['userId'] as string;
 
   try{
     const artistDoc = await firestore.collection('artists').doc(artistId).get();
@@ -152,7 +174,7 @@ app.get('/artist/:artistId', async(req, res) => {
 //Get songs in home page
 app.get('/home-songs', async(req:Request, res:Response) => {
 
-  const userId = req?.body?.userId;
+  const userId = req.headers['userId'] as string;
 
   try {
     const song = firestore.collection('songs');
@@ -175,7 +197,7 @@ app.get('/home-songs', async(req:Request, res:Response) => {
 
         const artistId = (await firestore.collection('artists').doc(songDetails.artist_id).get()).data()?.user_id
         const artistName = (await firestore.collection('userList').doc(artistId).get()).data()?.username
-        return {songId:songId, songName:songDetails.song_name, artistName:artistName, duration: songDetails.duration, isLiked}
+        return {songId:songId, songName:songDetails.song_name, artistId:songDetails.artist_id, artistName:artistName, duration: songDetails.duration, isLiked}
       })
     )
 
@@ -191,8 +213,9 @@ app.get('/home-songs', async(req:Request, res:Response) => {
 //Add songs to playlist
 app.post('/saveToPlaylist', async (req, res) => {
   
-  const { selectedPlaylists, songId, userId } = req.body;  
-
+  const { selectedPlaylists, songId } = req.body;
+  const userId = req.headers['userId'] as string;
+  
   if(!userId){
     return res.status(401).send('Login for this action');
   }
@@ -253,7 +276,8 @@ app.post('/saveToPlaylist', async (req, res) => {
 
 //Remove song from playlist
 app.post('/removeFromPlaylist', async(req,res)=>{
-  const {playlistId, songId, userId} = req.body;
+  const {playlistId, songId} = req.body;
+  const userId = req.headers['userId'] as string;
 
   if(!userId){
     return res.status(401).send('Login for this action');
@@ -284,38 +308,32 @@ app.post('/removeFromPlaylist', async(req,res)=>{
 })
 
 
-// //Get playlists in home page
-// app.get('/home-playlists', async(req,res)=> {
+//Get playlists in home page
+app.get('/home-playlists', async(req,res)=> {
 
-//   const authHeader = req.headers['authorization'];
-//   const token = authHeader && authHeader.split(' ')[1];
+  const userId = req.headers['userId'] as string;
 
-//   if (!token) {
-//     try {  
-//       const result = await query('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl LEFT JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" GROUP BY pl."Id", pl."Name"');
-//       res.status(200).send(result.rows);
-//     } catch(err) {
-//       console.error(err);
-//       res.status(500).send();
-//     }
-//   }
+  try{
+    let list = [];
+    const playlists = await firestore.collection('playlists').get()
 
-//   else {
-//     try {
-//       const decoded:any = jwt.verify(token, JWT_SECRET);
-//       const result = await query('SELECT pl."Id" AS "playlistId", pl."Name" AS "playlistName", COUNT(pd."songId") AS trackCount FROM "Playlist" pl LEFT JOIN "PlaylistDetails" pd ON pl."Id" = pd."playlistId" WHERE pl."CreatorId" = $1 GROUP BY pl."Id", pl."Name"',[decoded.userId]);
-//       res.status(200).send(result.rows);
-//     } catch(err:any) {
-//       if(err.name === 'TokenExpiredError'){
-//         res.status(401).send('Token expired');
-//       }
-//       console.error(err);
-//       res.status(500).send();
-//     }
-//   }
+    list = await Promise.all(
+      playlists.docs.map(async(doc)=>{
+        const detail = doc.data();
 
-// })
+        const trackCount = (await firestore.collection('playlist-songs').where('playlist_id','==', doc.id).get()).size
 
+        return {playlistId : doc.id, playlistName: detail.playlist_name, likes: detail.likes, trackCount}
+      })
+    )
+
+    res.status(200).send(list);
+  } catch(err) {
+    console.log(err)
+    res.status(500).send('Internal server error')
+  }
+
+})
 
 //get song from firebase
 app.get('/song/:songId', async (req, res) => {
@@ -392,13 +410,7 @@ app.get('/songCover/:songId', async (req, res) => {
 })
 
 
-// //Upload folder to firebase
-// const storage = multer.memoryStorage();
-// const upload = multer({ storage: storage });
-// const multipleUpload = upload.fields([
-//   { name: 'song', maxCount: 1 },
-//   { name: 'coverImage', maxCount: 1 }
-// ]);
+//Upload folder to firebase
 // app.post('/upload', multipleUpload, async(req: any, res: any) => {
 
 //   const authHeader = req.headers['authorization'];
@@ -469,34 +481,70 @@ app.get('/songCover/:songId', async (req, res) => {
 // });
 
 
-// //edit user profile
-// app.post('/edit/profile', upload.single('profilePicture'), async(req,res)=>{
-//   const authHeader = req.headers['authorization'];
-//   const token = authHeader && authHeader.split(' ')[1];
+//edit user profile
+app.post('/edit/profile', upload.single('profilePicture'), async(req,res)=>{
 
-//   if(token){
-//     try{
-//       const decoded:any = jwt.verify(token, JWT_SECRET);
-//       const userId = decoded.userId;
-//       const {userName} = req.body;
+  const userId = req.headers['userId'] as string;
+  const {userName} = req.body
+  const profileBuffer = req.file ? req.file.buffer : null;
 
-//       const profileBuffer = req.file ? req.file.buffer : null;
+  if(!userId) {
+    return res.status(401).send('Login for this action');
+  }
 
-//       const result = await query('UPDATE "UserList" SET "ProfilePicture" = $1, "UserName" = $2 WHERE "UserId" = $3',[profileBuffer, userName, userId]);
-//       res.status(200).send('Profile Updated Successfully');
-//     } catch(err){
-//       console.log(err);
-//       res.status(500).send(err)
-//     }
-//   } else {
-//     res.status(401).send('unauthorized');
-//   }
-// })
+  try {
+
+    if(userName){
+      const userdoc = firestore.collection('userList');
+      const existingName = await userdoc.where('username','==',userName).get();
+
+      if(existingName.empty){
+        await userdoc.doc(userId).update({ username: userName })
+        res.status(200).send('Profile Updated successfully');
+      } else {
+        res.status(409).send('Name already exists');
+      }
+    }
+    
+    if(profileBuffer){
+      const extensions = ['jpeg', 'png', 'jpg'];
+
+      for (const ext of extensions) {
+        const profilePic = bucket.file(`user-profile/${userId}.${ext}`)
+
+        try{
+          await profilePic.delete();          
+          break;
+        } catch(err) {
+          continue
+        }
+      }
+
+      const fileExtension = req.file?.originalname ? path.extname(req.file.originalname) : '.jpg';
+      const newFileName = `user-profile/${userId}${fileExtension}`;
+      const file = bucket.file(newFileName);
+      await file.save(profileBuffer, {
+        metadata: { contentType: req.file?.mimetype }
+      });
+        
+      res.status(200).send('Profile picture updated successfully');
+    }
+
+    if(!userName && !profileBuffer){
+      res.status(200).send('No changes')
+    }
+
+  } catch(err) {
+    console.log(err);
+    res.status(500).send('Internal server error');
+  }
+})
 
 
 //Get user profile
 app.get('/profile', async(req,res)=>{
-  const {userId} = req.body;
+  
+  const userId = req.headers['userId'] as string;
 
   if(!userId) {
     return res.status(401).send('Login to view profile');
@@ -538,32 +586,42 @@ app.get('/profile', async(req,res)=>{
 })
 
 
-// //Get Pinned Playlist in sidebar
-// app.get('/pins', async(req,res)=>{
-//   const authHeader = req.headers['authorization'];
-//   const token = authHeader && authHeader.split(' ')[1];
+//Get Pinned Playlist in sidebar
+app.get('/pins', async(req,res)=>{
 
-//   if(token){
-//     try{
-//       const decoded:any = jwt.verify(token, JWT_SECRET);
-//       const userId = decoded.userId;
+  const userId = req.headers['userId'] as string;
+  let list = [];
 
-//       const result = await query('SELECT pl."pinPlaylist" AS "id", p."Name" AS "name" FROM "PinList" pl JOIN "Playlist" p ON pl."pinPlaylist" = p."Id" WHERE pl."pinUser" = $1',[userId]);
-//       res.status(200).send(result.rows);
-//     } catch(err) {
-//       console.log(err);
-//       res.status(500).send(err);
-//     }
-//   } else {
-//     res.status(401).send('unauthorized');
-//   }
-// })
+  if(!userId) {
+    return res.status(200).send([]);
+  }
+
+  try{
+    const pinlist = await firestore.collection('pinlist').where('user_id','==', userId).get();
+
+    list = await Promise.all(
+      pinlist.docs.map(async(doc)=>{
+        const {playlist_id} = doc.data();
+
+        const playlistName = (await firestore.collection('playlists').doc(playlist_id).get())?.data()?.playlist_name;
+
+        return {playlistId: playlist_id, playlistName};
+      })
+    )
+
+    res.status(200).send(list)
+  } catch(err) {
+    console.log(err);
+    res.status(500).send('Internal Server error');
+  }
+})
 
 
 //Create playlist
 app.post('/create/playlist',async(req,res)=>{
 
-  const {playlistName, userId} = req.body
+  const {playlistName} = req.body
+  const userId = req.headers['userId'] as string;
 
   if(!userId){
     res.status(401).send('Login for this action')
@@ -598,7 +656,7 @@ app.post('/create/playlist',async(req,res)=>{
 app.get('/playlists/:playlistId', async(req,res)=>{
 
   const {playlistId} = req.params
-  const {userId} = req.body
+  const userId = req.headers['userId'] as string;
 
   try {
 
@@ -607,7 +665,8 @@ app.get('/playlists/:playlistId', async(req,res)=>{
     let playlistDetails = {
       playlistId: playlistId,
       playlistName: 'Vibify',
-      creator: 'definitely_not_god',
+      creatorId: "none",
+      creatorName: 'none',
       likes : 0
     }
 
@@ -617,10 +676,11 @@ app.get('/playlists/:playlistId', async(req,res)=>{
       res.status(404).send('Playlist not found')
     } else {
       const playlistData = playlist?.data() as { playlist_name: string; user_id: string; likes: number };
-  
+      
       if (playlistData) {
         const { playlist_name, user_id, likes } = playlistData;
-        playlistDetails = { playlistId ,playlistName:playlist_name, creator:user_id, likes:likes }
+        const userName = (await firestore.collection('userList').doc(user_id).get()).data()?.username;
+        playlistDetails = { playlistId ,playlistName:playlist_name, creatorId:user_id, creatorName:userName, likes:likes }
       }
 
       const songFetch = await firestore.collection('playlist-songs').where('playlist_id', '==', playlistId).get()
@@ -642,7 +702,7 @@ app.get('/playlists/:playlistId', async(req,res)=>{
             isLiked = !userLiked.empty
           }
 
-          return {songId: doc.data()?.song_id, songName: song_name, duration, artistName, isLiked}
+          return {songId: doc.data()?.song_id, songName: song_name, duration, artistId: artist_id, artistName, isLiked}
         })
       )
     }
@@ -659,7 +719,7 @@ app.get('/playlists/:playlistId', async(req,res)=>{
 //Get favorite songs
 app.get('/favorites', async(req,res)=>{
 
-  const { userId } = req.body
+  const userId = req.headers['userId'] as string;
 
   if(!userId){
     res.status(401).send('Login for this action')
@@ -682,7 +742,7 @@ app.get('/favorites', async(req,res)=>{
           const artistUserId = (await firestore.collection('artists').doc(artistId).get()).data()?.user_id
 
           const artistName = (await firestore.collection('userList').doc(artistUserId).get()).data()?.username
-          return { song_name: songDetails?.song_name, artist_name: artistName, duration: songDetails?.duration }
+          return { songId, songName: songDetails?.song_name, artistId, artistName, duration: songDetails?.duration }
         })
       )
       res.status(200).send(favoritesArray);
@@ -699,7 +759,7 @@ app.get('/favorites', async(req,res)=>{
 //Like song
 app.post('/like/:songId', async(req,res)=>{
   const song_id = req.params.songId
-  const user_id = req?.body?.userId;
+  const user_id = req.headers['userId'] as string;
 
   if(!user_id){
     res.status(401).send('Login for this action')
@@ -734,7 +794,7 @@ app.post('/like/:songId', async(req,res)=>{
 //Unlike song
 app.delete('/like/:songId', async (req: Request, res: Response) => {
   const song_id = req.params.songId;
-  const user_id = req.body.userId;
+  const user_id = req.headers['userId'] as string;
 
   if (!user_id) {
     return res.status(401).send('Login for this action');
@@ -792,7 +852,7 @@ app.post('/login', async(req,res)=>{
     
     if(validPassword) {
       const token = jwt.sign({ userId: userId }, JWT_SECRET, {
-         expiresIn: '10h'
+         expiresIn: '100h'
       });
       res.status(200).send({ token });
     } else {

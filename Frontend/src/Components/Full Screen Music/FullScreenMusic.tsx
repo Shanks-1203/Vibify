@@ -26,8 +26,8 @@ const FullScreenMusic = () => {
         song: {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
-          artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
-          lyrics : shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
+          artist : shuffle ? shuffledQueue[songIndex].artistName : Queue[songIndex].artistName,
+          // lyrics : shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
           urls: {
             mp3:null,
             cover: null
@@ -40,8 +40,8 @@ const FullScreenMusic = () => {
         song: {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
-          artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
-          lyrics : shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
+          artist : shuffle ? shuffledQueue[songIndex].artistName : Queue[songIndex].artistName,
+          // lyrics : shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
           urls: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
@@ -106,7 +106,7 @@ const FullScreenMusic = () => {
       <div className='flex items-center absolute top-3 right-7'>
             <p className='text-2xl cursor-pointer transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'on'}))}><MdKeyboardArrowDown/></p>
         </div>
-        <div className='w-[15rem] h-[15rem] bg-white text-black grid place-items-center text-[6rem]'>{song.urls.cover ? <img src={song.urls.cover} alt="Cover Image" className='w-full h-full'/> :<PiVinylRecord/>}</div>
+        <div className='w-[15rem] h-[15rem] bg-white text-black grid place-items-center text-[6rem]'>{song.urls.cover ? <img src={song.urls.cover} alt="Cover" className='w-full h-full'/> :<PiVinylRecord/>}</div>
         <p className='font-semibold mt-[2rem] text-xl'>{song.name}</p>
         <p className='text-sm mt-2 opacity-65'>{song.artist}</p>
         

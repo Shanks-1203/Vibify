@@ -20,22 +20,23 @@ const auth = (req:Request, res:Response, next:NextFunction) => {
   
     if (openPaths.includes(req.path)) {
         return next();
+    } else {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        
+        if (token) {
+            jwt.verify(token, JWT_SECRET, (err, decoded) => {
+                if (err) {
+                    return res.status(403).json({ message: 'Verification error' });
+                }
+                req.headers['userId'] = (decoded as MyJwtPayload).userId;
+                next()
+            })
+        } else {
+            next();
+        }
     }
 
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    if (token) {
-        jwt.verify(token, JWT_SECRET, (err, decoded) => {
-            if (err) {
-                return res.status(403).json({ message: 'Verification error' });
-            }
-            req.body = { ...req.body, userId: (decoded as MyJwtPayload).userId };
-            next()
-        })
-    } else {
-        next();
-    }
 
   
 }

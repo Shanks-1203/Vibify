@@ -53,7 +53,7 @@ const PlaylistTemplate : React.FC<{details: playlistType}> = ({details}) => {
         </div>
         <div className='w-[60%] flex justify-center flex-col'>
           <p className='font-medium text-sm h-fit'>{details.playlistName}</p>
-          <p className='opacity-65 mt-2 text-xs'>{details.trackcount} Tracks</p>
+          <p className='opacity-65 mt-2 text-xs'>{details.trackCount} Tracks</p>
         </div>
         <div className='p-[0.4rem] rounded-full hover:bg-[#80808099] transition-all absolute right-2'><IoMdMore className='text-2xl'/></div>
       </div>

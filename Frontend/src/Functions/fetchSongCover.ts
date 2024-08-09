@@ -1,6 +1,6 @@
 import httpClient from "../httpClient";
 
-const fetchSongCover = async (songId:number) => {
+const fetchSongCover = async (songId:string) => {
     try {
       const response = await httpClient.get(`/songCover/${songId}`);
       const url = response.data;

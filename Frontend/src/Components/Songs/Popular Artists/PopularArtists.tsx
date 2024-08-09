@@ -4,7 +4,6 @@ import './popularArtists.css'
 import httpClient from '../../../httpClient';
 import { Link } from 'react-router-dom';
 import { artistType } from '../../../Types/types';
-import b64toBlob from '../../../Functions/base64ToBlob';
 
 const PopularArtists = () => {
 
@@ -15,7 +14,6 @@ const PopularArtists = () => {
             try{
                 const resp = await httpClient.get('/home-artists');
                 setArtists(resp.data);
-                              
             } catch(err) {
                 console.error(err);
             }
@@ -44,28 +42,13 @@ const PopularArtists = () => {
 }
 
 const ArtistTemplate: React.FC<{item:artistType}> = ({item}) => {
-    
-    const [profile, setProfile] = useState('');
-    const {ProfilePicture} = item
-
-    useEffect(()=>{
-        if(ProfilePicture) {
-            try{
-                const profilePicBlob = b64toBlob(ProfilePicture, 'image/jpeg');
-                const imageUrl = URL.createObjectURL(profilePicBlob);
-                setProfile(imageUrl);
-            } catch(err){
-                console.error('Error creating blob:', err);
-            }
-        }
-    },[ProfilePicture])
-
+    const {profileURL} = item    
 
     return(
-        <Link to={`/artists/${item.ArtistId}`}><div className='flex text-white flex-col text-center'>
-            <div className='w-[8.5rem] h-[8.5rem] rounded-lg bg-white cursor-pointer text-black text-[3rem] grid place-items-center overflow-hidden'>{profile ? <img src={profile} alt="Artist Image" className='w-full h-full' /> : <FaUser />}</div>
-            <p className='mt-3 text-[0.8rem]'>{item.ArtistName}</p>
-            <p className='mt-1 text-xs opacity-65'>{item.FollowersCount} Followers</p>
+        <Link to={`/artists/${item.artistId}`}><div className='flex text-white flex-col text-center'>
+            <div className='w-[8.5rem] h-[8.5rem] rounded-lg bg-white cursor-pointer text-black text-[3rem] grid place-items-center overflow-hidden'>{profileURL ? <img src={profileURL} alt="artist-profile" className='w-full h-full' /> : <FaUser />}</div>
+            <p className='mt-3 text-[0.8rem]'>{item.artistName}</p>
+            <p className='mt-1 text-xs opacity-65'>{item.followers} Followers</p>
         </div></Link>
     )
 }

@@ -6,34 +6,42 @@ export interface Song {
     UserName: String
     artistId: number
     duration: number
-    songId: number
+    songId: string
     songName: String
     lyrics: String
     isLiked: Boolean
 }
 
 export interface SimpleSongType {
-  songId: number
-  songName: String
-  artistId: number
-  ArtistName: String
+  songId: string
+  songName: string
+  artistId: string
+  artistName: String
   duration: number
-  lyrics: String
+  // lyrics: String
   isLiked:Boolean
 }
 
 export interface QueueState {
     musicQueue: {
-        Queue: Song[]
-        shuffledQueue: Song[]
+        Queue: SimpleSongType[]
+        shuffledQueue: SimpleSongType[]
         playIndex: number
     }
+}
+
+export interface playlistDetails {
+  playlistId: string,
+  playlistName: string,
+  creatorId: string,
+  creatorName: string,
+  likes: number
 }
 
 export interface musicPlayerState {
     musicPlayer: {
       song:{
-        id: number,
+        id: string,
         name:String,
         artist:String,
       lyrics: String | null,
@@ -56,7 +64,7 @@ export interface musicPlayerState {
 export type playlistType = {
   playlistId:number
   playlistName:String
-  trackcount: number
+  trackCount: number
 };
 
 export interface saveToPlaylist {
@@ -68,16 +76,17 @@ export interface saveToPlaylist {
 }
 
 export interface artistSongs {
-  ArtistId:number, 
-  ArtistName:String, 
-  FollowersCount: number, 
-  songId:number, 
-  songName:String, 
-  duration:number,
-  lyrics:String,
-  isLiked: Boolean,
-  ProfilePicture: string,
-  UserId:number
+  songId: string
+  songName: string
+  duration: number
+  isLiked: boolean
+}
+
+export interface artistDetails {
+  artistId: string
+  artistName: string
+  artistProfile: string
+  followers: number
 }
 
 export interface profileDetails {
@@ -88,9 +97,8 @@ export interface profileDetails {
 }
 
 export type artistType = {
-  ArtistId:number
-  ArtistName:String
-  FollowersCount: number
-  UserId:number
-  ProfilePicture:Buffer
+  artistId:number
+  artistName:String
+  followers: number
+  profileURL: string
 };

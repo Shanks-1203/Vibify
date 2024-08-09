@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
 import { setDuration, setLiked, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import { addMusic, addToShuffledQueue, clearQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
-import { QueueState, Song, musicPlayerState } from '../../Types/types';
+import { QueueState, SimpleSongType, musicPlayerState, playlistDetails } from '../../Types/types';
 import CommonHeader from '../../Components/Header/CommonHeader';
 import { useLocation, useParams } from 'react-router-dom';
 import fetchSongUrl from '../../Functions/fetchSongUrl';
@@ -19,19 +19,21 @@ const PlaylistPage = () => {
 
   const {playlistId} = useParams()
 
-  const [songs, setSongs] = useState<Song[]>([])
+  const [playlistDetails, setPlaylistDetails] = useState<playlistDetails>();
+  const [songs, setSongs] = useState<SimpleSongType[]>([])
   const [dropdown, setDropdown] = useState<number | null>(null);
   const { miniplayer, isLiked } = useSelector((state:musicPlayerState) => state.musicPlayer);
   const [likeTrigger, setLikeTrigger] = useState(false);
   const { Queue } = useSelector((state:QueueState) => state.musicQueue);
 
+  const token = localStorage.getItem('token')
   const getSongs = async() => {
-    const token = localStorage.getItem('token')
     try{
       const resp = await httpClient.get(`/playlists/${playlistId}`, {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
       })
-      setSongs(resp.data)
+      setPlaylistDetails(resp.data.playlistDetails)
+      setSongs(resp.data.songs)
     } catch(err) {
       console.log(err);
     }
@@ -46,10 +48,14 @@ const PlaylistPage = () => {
 
   const removeFromPlaylist = async(songId:number, playlistId:number, event:any) => {
     event.stopPropagation();
-    const resp = await httpClient.post('/removeFromPlaylist',{
-      playlistId, songId
-    })
-    console.log(resp.data);
+    await httpClient.post('/removeFromPlaylist',
+      {
+        playlistId, songId
+      },
+      {
+        headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+      }
+    )
     setDropdown(null);
   }
 
@@ -57,16 +63,17 @@ const PlaylistPage = () => {
 
   useEffect(()=>{
     getSongs();
+    //eslint-disable-next-line
   },[location, removeFromPlaylist, likeTrigger, isLiked])
 
-  const playSong = async (item:Song) => {
+  const playSong = async (item:SimpleSongType) => {
   
       dispatch(setSongInfo({
         song: {
           id: item.songId,
           name: item.songName,
-          artist: item.ArtistName,
-          lyrics: item.lyrics,
+          artist: item.artistName,
+          // lyrics: item.lyrics,
           urls: {
             mp3:null,
             cover: null
@@ -79,8 +86,8 @@ const PlaylistPage = () => {
         song: {
           id: item.songId,
           name: item.songName,
-          artist: item.ArtistName,
-          lyrics: item.lyrics,
+          artist: item.artistName,
+          // lyrics: item.lyrics,
           urls: await fetchSongUrl(item.songId),
         },
         songLength: item.duration,
@@ -98,7 +105,7 @@ const PlaylistPage = () => {
     dispatch(clearQueue());
     playSong(songs[songNumber]);
     dispatch(setPlayIndex(0))
-    songs.map((song:Song, index)=>{
+    songs.map((song:SimpleSongType, index)=>{
         dispatch(addMusic(song));
         return null;
     })
@@ -130,17 +137,17 @@ const PlaylistPage = () => {
         <div className={`w-full p-[2rem] text-white ${songs.length < 2 && 'h-screen'}`}>
 
           <CommonHeader/>
-          <p className='font-semibold text-xl mt-[2rem]'>{songs[0]?.PlaylistName}</p>
-          <p className='mt-[0.5rem] opacity-65 text-xs'>Created by <span className='hover:underline cursor-pointer'>{songs[0]?.UserName}</span></p>
+          <p className='font-semibold text-xl mt-[2rem]'>{playlistDetails?.playlistName}</p>
+          <p className='mt-[0.5rem] opacity-65 text-xs'>Created by <span className='hover:underline cursor-pointer'>{playlistDetails?.creatorName}</span></p>
 
-          <PlaylistOptions likes={songs[0]?.PlaylistLikes} playlistPlay={playlistPlay}/>
+          <PlaylistOptions likes={playlistDetails?.likes} playlistPlay={playlistPlay}/>
 
           { songs[0]?.songName && 
             <div className='flex flex-col gap-[1rem] mt-[2rem] text-[0.8rem]'>
             {
-              songs.map((item:Song,index)=>{
+              songs.map((item:SimpleSongType,index)=>{
                 return (
-                <PlaylistSongs setLikeTrigger={setLikeTrigger} key={index} playlistPlay={playlistPlay} removeFromPlaylist={removeFromPlaylist} addToPlaylist={addToPlaylist} addToQueue={addToQueue} item={item} index={index} dropdown={dropdown} toggleDropdown={toggleDropdown}/>
+                <PlaylistSongs playlistDetails={playlistDetails} setLikeTrigger={setLikeTrigger} key={index} playlistPlay={playlistPlay} removeFromPlaylist={removeFromPlaylist} addToPlaylist={addToPlaylist} addToQueue={addToQueue} item={item} index={index} dropdown={dropdown} toggleDropdown={toggleDropdown}/>
               )})
             }
           </div>}

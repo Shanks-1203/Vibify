@@ -9,7 +9,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateProfileDetails } from '../../Slices/profileDetailsSlice';
 import { profileDetails } from '../../Types/types';
 import './commonHeader.css'
-import b64toBlob from '../../Functions/base64ToBlob';
 
 const CommonHeader = () => {
 
@@ -26,9 +25,9 @@ const CommonHeader = () => {
     const resp = await httpClient.get('/profile',{
       headers: token ? { 'Authorization' : `Bearer ${token}` } : {}
     })
-    const { userName, profilePic } = resp.data;
+    const { userName, profileUrl } = resp.data;    
 
-    if(!profilePic) {
+    if(!profileUrl) {
       dispatch(updateProfileDetails(
         {
           userProfileName:userName,
@@ -37,15 +36,12 @@ const CommonHeader = () => {
       ))
     }
     
-    if(resp.data && profilePic){
-      
-      const profilePicBlob = b64toBlob(profilePic, 'image/jpeg');
-      const imageUrl = URL.createObjectURL(profilePicBlob);
+    if(resp.data && profileUrl){
 
         dispatch(updateProfileDetails(
           {
             userProfileName:userName,
-            profilePic: imageUrl
+            profilePic: profileUrl
           }
         ))
     }

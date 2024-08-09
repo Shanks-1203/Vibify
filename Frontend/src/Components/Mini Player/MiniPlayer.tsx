@@ -5,7 +5,7 @@ import MiniSeekbar from '../Seekbar/Mini Seekbar/MiniSeekbar';
 import MiniControls from '../Controls/Mini Controls/MiniControls';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDuration, setLiked, setMiniplayer, setMusicSeek, setPlay, setSongInfo, togglePlay } from '../../Slices/musicPlayerSlice';
-import { QueueState, Song, musicPlayerState } from '../../Types/types';
+import { QueueState, SimpleSongType, musicPlayerState } from '../../Types/types';
 import { addToShuffledQueue, clearShuffledQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import { CiHeart } from "react-icons/ci";
 import fetchSongUrl from '../../Functions/fetchSongUrl';
@@ -30,8 +30,8 @@ const MiniPlayer = () => {
         song: {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
-          artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
-          lyrics: shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
+          artist : shuffle ? shuffledQueue[songIndex].artistName : Queue[songIndex].artistName,
+          // lyrics: shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
           urls: {
             mp3:null,
             cover: null,
@@ -44,8 +44,8 @@ const MiniPlayer = () => {
         song: {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
-          artist : shuffle ? shuffledQueue[songIndex].ArtistName : Queue[songIndex].ArtistName,
-          lyrics: shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
+          artist : shuffle ? shuffledQueue[songIndex].artistName : Queue[songIndex].artistName,
+          // lyrics: shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
           urls: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
@@ -97,6 +97,7 @@ const MiniPlayer = () => {
       } else {
         dispatch(setLiked(!likeTrigger))
       }
+      //eslint-disable-next-line
     },[likeTrigger])
 
     useEffect(()=>{
@@ -127,6 +128,7 @@ const MiniPlayer = () => {
                 }
             }
         }
+        //eslint-disable-next-line
     },[duration])
 
     useEffect(() => {
@@ -136,7 +138,7 @@ const MiniPlayer = () => {
         
         const remainingSongs = Queue.filter((item, index) => index !== playIndex);
         
-        const shuffleArray = (array:Song[]) => {
+        const shuffleArray = (array:SimpleSongType[]) => {
           for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
@@ -146,8 +148,9 @@ const MiniPlayer = () => {
         
         const shuffledSongs = shuffleArray(remainingSongs);
         
-        shuffledSongs.map((song:Song) => {
+        shuffledSongs.map((song:SimpleSongType) => {
           dispatch(addToShuffledQueue(song));
+          return null;
         });
         
         dispatch(setPlayIndex(0));
@@ -158,8 +161,10 @@ const MiniPlayer = () => {
           if(item.songId === songId){
             dispatch(setPlayIndex(index));
           }
+          return null;
         })
       }
+      //eslint-disable-next-line
     }, [shuffle, dispatch, !shuffle && Queue]);
     
     useEffect(() => {
@@ -195,6 +200,7 @@ const MiniPlayer = () => {
             audioRef.current.currentTime = musicSeek;
         }
         dispatch(setDuration({duration:musicSeek}))
+        //eslint-disable-next-line
     },[musicSeek])
 
     useEffect(() => {
@@ -232,7 +238,7 @@ const MiniPlayer = () => {
         
         <div className='flex items-center w-[15%]'>
             <div className='grid place-items-center'>
-            <div className='w-[2.7rem] h-[2.7rem] bg-white text-black grid place-items-center text-3xl'>{song.urls.cover ? <img src={song.urls.cover} alt="Cover Image" className='w-full h-full'/> :<PiVinylRecord/>}</div>
+            <div className='w-[2.7rem] h-[2.7rem] bg-white text-black grid place-items-center text-3xl'>{song.urls.cover ? <img src={song.urls.cover} alt="cover" className='w-full h-full'/> :<PiVinylRecord/>}</div>
             </div>
         
             <div className='w-full ml-[1rem]'>

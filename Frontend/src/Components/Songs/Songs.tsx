@@ -50,7 +50,7 @@ const Songs = () => {
       </div>
       <div className='w-full h-[18rem] flex flex-col gap-2 mt-[1rem]'>
         {
-          songsList.slice(3,8).map((item, index)=>{
+          songsList.slice(0,5).map((item, index)=>{
               return(
                 <SongTemplate setLikeTrigger={setLikeTrigger} dropdown={dropdown} setDropdown={setDropdown} toggleDropDown={toggleDropDown} key={index} index={index} item={item}/>
               )
@@ -83,8 +83,8 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
       song: {
         id: item.songId,
         name: item.songName,
-        artist: item.ArtistName,
-        lyrics: item.lyrics,
+        artist: item.artistName,
+        lyrics: null,
         urls: {
           mp3:null,
           cover: null
@@ -97,8 +97,8 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
       song: {
         id: item.songId,
         name: item.songName,
-        artist: item.ArtistName,
-        lyrics: item.lyrics,
+        artist: item.artistName,
+        lyrics: null,
         urls: await fetchSongUrl(item.songId),
       },
       songLength: item.duration,
@@ -127,14 +127,14 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
     dispatch(setSongId(item.songId));
   }
 
-  const handleLike = (e:any, songId:number) => {
+  const handleLike = (e:any, songId:string) => {
     like(e, songId, setLikeTrigger);
     if(song.id===songId){
         dispatch(setLiked(!isLiked));
     }
   }
 
-  const handleUnlike = (e:any, songId:number) => {
+  const handleUnlike = (e:any, songId:string) => {
     unlike(e, songId, setLikeTrigger);
     if(song.id===songId){
         dispatch(setLiked(!isLiked));
@@ -144,10 +144,10 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
     return (
         <div className='flex items-center gap-[2rem] cursor-pointer py-[0.5rem] w-full text-center text-white hover:bg-gradient-to-r hover:from-[#80808015] hover:via-[#80808060] hover:to-[#80808015]' onClick={playSong}>
             <div className='w-[2.2rem] h-[2.2rem] rounded-lg text-xl grid text-black place-items-center bg-white overflow-hidden'>
-                {coverUrl ? <img src={coverUrl} alt="Cover Image" /> : <PiVinylRecord/>}
+                {coverUrl ? <img src={coverUrl} alt="cover" /> : <PiVinylRecord/>}
             </div>
-            <p className='font-medium text-left w-[20%] text-xs'>{item.songName}</p>
-            <p className='opacity-65 text-xs'>{item.ArtistName}</p>
+            <p className='font-medium text-left w-[25%] text-xs'>{item.songName}</p>
+            <p className='opacity-65 text-xs'>{item.artistName}</p>
             <p className='text-[1.04rem] ml-auto'>{item.isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>handleUnlike(e, item.songId)}/> : <FaRegHeart className='opacity-65' onClick={(e)=>handleLike(e, item.songId)}/>}</p>
             <p className='ml-3 text-xs w-[5%]'>{durationCalculator(item.duration)}</p>
             <div className='p-[0.5rem] relative hover:bg-[#80808040] rounded-full' onClick={(e)=>toggleDropDown(index, e)}>
@@ -163,7 +163,8 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
                           {item.name}
                         </p>
                       )
-                    }
+                    }  
+                    return null
                   })
                 }
               </div>

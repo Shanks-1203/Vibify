@@ -12,39 +12,42 @@ const SaveToPlaylistPage = () => {
     const {songId, popup} = useSelector((state:saveToPlaylist)=>state.saveToPlaylist)
     
     const dispatch = useDispatch();
+    const token = localStorage.getItem('token');
 
     const playlistCall = async() => {
-        const token = localStorage.getItem('token');
         try{
             const resp = await httpClient.get('/home-playlists', {
                 headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
             })
-
-            setPlaylist(resp.data);
-            
+            setPlaylist(resp.data);   
         } catch(err) {
             console.error(err);
         }
     }
 
+    
+    const saveFunction = async() => {
+        try {
+            await httpClient.post('/saveToPlaylist', 
+                {
+                    selectedPlaylists: selected,
+                    songId: songId,
+                },
+                {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                }
+            );
+            dispatch(togglePopup());
+            
+        } catch(err) {
+            console.error(err);
+        }
+    }
+    
     useEffect(()=>{
         playlistCall();
-    },[])
-
-    const saveFunction = async() => {
-        try{
-            const resp = await httpClient.post('/saveToPlaylist',{
-                selectedPlaylists: selected,
-                songId: songId,
-            })
-
-            console.log(resp.data);
-            dispatch(togglePopup())
-            
-        } catch(err) {
-            console.error(err);
-        }
-    }
+        // eslint-disable-next-line
+    },[saveFunction])
 
     const addSelection = (index: number) => {
         setSelected(prev =>
@@ -67,7 +70,7 @@ const SaveToPlaylistPage = () => {
                                     <BiSolidPlaylist/>
                                 </div>
                                 <p className='text-xs font-semibold text-center'>{item.playlistName}</p>
-                                <p className='text-xs text-center opacity-65 ml-auto'>{item.trackcount} Tracks</p>
+                                <p className='text-xs text-center opacity-65 ml-auto'>{item.trackCount} Tracks</p>
                             </div>
                         )
                     })

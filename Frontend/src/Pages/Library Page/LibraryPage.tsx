@@ -15,17 +15,20 @@ const LibraryPage = () => {
         {
             playlistId:0,
             playlistName: 'Playlist',
-            trackcount: 12
+            likes: 0,
+            trackCount: 12
         },
         {
             playlistId:0,
             playlistName: 'Playlist',
-            trackcount: 12
+            likes: 0,
+            trackCount: 12
         },
         {
             playlistId:0,
             playlistName: 'Playlist',
-            trackcount: 12
+            likes: 0,
+            trackCount: 12
         }
     ]
 
@@ -77,7 +80,7 @@ const LibraryPage = () => {
                                 <PiPlaylist className='text-3xl'/>
                             </div>
                             <p className='mt-[0.8rem]'>{item.playlistName}</p>
-                            <p className='mt-1 opacity-65'>{item.trackcount} Tracks</p>
+                            <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
                         </div>
                     </Link>
                 )
@@ -90,13 +93,13 @@ const LibraryPage = () => {
         <div className='flex gap-[3rem]'>
             {(playlists ? playlists : dummyPlaylist).map((item,index)=>{
                 return (
-                    <Link to={playlists ? `/playlists/${item.playlistId}` : '/library'}>                
+                    <Link key={index} to={playlists ? `/playlists/${item.playlistId}` : '/library'}>                
                         <div key={index} className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
                             <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
                                 <PiPlaylist className='text-3xl'/>
                             </div>
                             <p className='mt-[0.8rem]'>{item.playlistName}</p>
-                            <p className='mt-1 opacity-65'>{item.trackcount} Tracks</p>
+                            <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
                         </div>
                     </Link>
 

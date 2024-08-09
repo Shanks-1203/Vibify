@@ -25,8 +25,6 @@ const Sidebar = () => {
     const resp = await httpClient.get('/pins',{
       headers: token ? {Authorization: `Bearer ${token}`} : {}
     })
-
-    console.log(resp.data);
     setPins(resp.data);
   }
 
@@ -69,10 +67,10 @@ const Sidebar = () => {
               </Link>
               
               {
-                pins.map((item:{id:number, name:String},index)=>{
+                pins.map((item:{playlistId:string, playlistName:String},index)=>{
 
                   const getColorClass = () => {
-                    if (loc === 'playlists' && item.id === parseInt(loc2)) {
+                    if (loc === 'playlists' && item.playlistId === loc2) {
                       return 'text-[#E76716]';
                     } else if (index === 0) {
                       return 'text-blue-500';
@@ -85,10 +83,10 @@ const Sidebar = () => {
                   };
 
                   return(
-                    <Link to={`/playlists/${item.id}`} key={item.id}>
-                      <div key={item.id} className={`flex items-center gap-3 px-4 cursor-pointer py-3 hover:bg-[#ffffff30] ${(loc==='playlists' && parseInt(loc2)===item.id) && 'border-l-2 bg-gradient-to-r border-[#E76716] from-[#E7671660] to-black text-[#E76716]'}`}>
+                    <Link to={`/playlists/${item.playlistId}`} key={item.playlistId}>
+                      <div className={`flex items-center gap-3 px-4 cursor-pointer py-3 hover:bg-[#ffffff30] ${(loc==='playlists' && loc2===item.playlistId) && 'border-l-2 bg-gradient-to-r border-[#E76716] from-[#E7671660] to-black text-[#E76716]'}`}>
                         <div className='w-[15%]'><GoPin className={`text-xl rounded-full ${getColorClass()}`} /></div>
-                        <p>{item.name}</p>
+                        <p>{item.playlistName}</p>
                       </div>
                     </Link>
                   )

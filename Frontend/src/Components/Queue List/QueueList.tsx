@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { PiVinylRecord } from 'react-icons/pi'
 import { IoReorderTwoOutline } from "react-icons/io5";
-import { QueueState, Song, musicPlayerState } from '../../Types/types';
+import { QueueState, SimpleSongType, musicPlayerState } from '../../Types/types';
 import { useSelector } from 'react-redux';
 import durationCalculator from '../../Functions/durationCalculator';
 import fetchSongCover from '../../Functions/fetchSongCover';
@@ -16,6 +16,7 @@ const QueueList = ({playFromQueue}:{playFromQueue:Function}) => {
     if(playIndex>=highestPlayIndex){
       setHighestPlayIndex(playIndex);
     }
+    //eslint-disable-next-line
   },[playIndex])
 
   return (
@@ -31,7 +32,7 @@ const QueueList = ({playFromQueue}:{playFromQueue:Function}) => {
   )
 }
 
-const QueueSongsTemplate = ({playFromQueue, highestPlayIndex, song, index}:{playFromQueue:Function, highestPlayIndex:number, song:Song, index:number}) => {
+const QueueSongsTemplate = ({playFromQueue, highestPlayIndex, song, index}:{playFromQueue:Function, highestPlayIndex:number, song:SimpleSongType, index:number}) => {
   
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const {Queue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
@@ -50,12 +51,12 @@ const QueueSongsTemplate = ({playFromQueue, highestPlayIndex, song, index}:{play
         <div key={index} className={`w-full h-[3.7rem] rounded-sm hover:bg-[#80808040] cursor-pointer flex gap-[1.2rem] items-center px-[1.5rem] ${index===playIndex && 'bg-[#80808040]'}`} onClick={()=>playFromQueue(index)}>
                   
             <div className='w-[2.5rem] h-[2.5rem] rounded-lg text-3xl grid place-items-center'>
-              {coverUrl ? <img src={coverUrl} alt="Cover Image" /> :<PiVinylRecord/>}
+              {coverUrl ? <img src={coverUrl} alt="Cover" /> :<PiVinylRecord/>}
             </div>
                     
             <div>
                 <p className='text-xs font-semibold'>{song.songName}</p>
-                <p className='text-xs opacity-65'>{song.ArtistName}</p>
+                <p className='text-xs opacity-65'>{song.artistName}</p>
             </div>
             <p className='text-xs ml-auto'>{durationCalculator(song.duration)}</p>
             <p className='text-xl'><IoReorderTwoOutline/></p>
