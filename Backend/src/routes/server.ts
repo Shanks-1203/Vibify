@@ -8,6 +8,7 @@ var bodyParser = require('body-parser')
 import dotenv from 'dotenv';
 import multer from 'multer';
 import auth from '../middleware/authMiddleware';
+const fs = require('fs');
 
 const app = express();
 const serviceAccount = require('../../serviceAccountKey.json');
@@ -343,14 +344,16 @@ app.get('/song/:songId', async (req, res) => {
     const prefix = `songs/${songId}/`;
 
     const [files] = await bucket.getFiles({ prefix });
+    let lyricsText;
 
     if (!files || files.length === 0) {
       return res.status(404).json({ error: 'Files not found' });
     }
 
-    let urls:{mp3:string|null, cover:string|null} = {
+    let urls:{mp3:string|null, cover:string|null, lyrics:string|null} = {
       mp3:null,
-      cover:null
+      cover:null,
+      lyrics:null
     };
 
     for (const file of files) {
@@ -364,6 +367,10 @@ app.get('/song/:songId', async (req, res) => {
         urls.mp3 = url;
       } else if (extension === 'png' || extension === 'jpg' || extension === 'jpeg' || extension === 'jfif'){
         urls.cover = url
+      } else if (extension === 'txt') {
+        const [buffer] = await file.download();
+        const lyrics = buffer.toString('utf8');
+        urls.lyrics = lyrics;
       }
     }
 
@@ -651,6 +658,27 @@ app.post('/create/playlist',async(req,res)=>{
   }
 })
 
+//Like playlist
+app.post('/like/playlist', async(req,res)=>{
+  const userId = req.headers['userId'] as string;
+  const {playlistId} = req.body
+
+  if(!userId){
+    res.status(401).send('Login for this action');
+  }
+
+  try{
+    const addToLibrary = await firestore.collection('library-playlists').add({
+      playlist_id: playlistId,
+      user_id: userId
+    })
+    res.status(200).send('Playlist Liked')
+  } catch(err) {
+    console.log(err)
+    res.status(500).send('Internal Server error')
+  }
+})
+
 
 //Get playlist details
 app.get('/playlists/:playlistId', async(req,res)=>{
@@ -667,7 +695,8 @@ app.get('/playlists/:playlistId', async(req,res)=>{
       playlistName: 'Vibify',
       creatorId: "none",
       creatorName: 'none',
-      likes : 0
+      likes: 0,
+      isLiked: false
     }
 
     let songs: {songId: string, songName: string, duration: number, artistName: string}[] = [];
@@ -675,12 +704,17 @@ app.get('/playlists/:playlistId', async(req,res)=>{
     if(!playlist.exists){
       res.status(404).send('Playlist not found')
     } else {
-      const playlistData = playlist?.data() as { playlist_name: string; user_id: string; likes: number };
+      const playlistData = playlist?.data() as { playlist_name: string; user_id: string; };
       
       if (playlistData) {
-        const { playlist_name, user_id, likes } = playlistData;
+        const { playlist_name, user_id } = playlistData;
         const userName = (await firestore.collection('userList').doc(user_id).get()).data()?.username;
-        playlistDetails = { playlistId ,playlistName:playlist_name, creatorId:user_id, creatorName:userName, likes:likes }
+        const likes = (await firestore.collection('library-playlists').where('playlist_id','==',playlistId).get()).size
+        const isLiked = await firestore.collection('library-playlists')
+        .where('playlist_id','==',playlistId)
+        .where('user_id', '==', userId).get()
+      
+        playlistDetails = { playlistId ,playlistName:playlist_name, creatorId:user_id, creatorName:userName, likes, isLiked: !isLiked.empty }
       }
 
       const songFetch = await firestore.collection('playlist-songs').where('playlist_id', '==', playlistId).get()
@@ -902,6 +936,10 @@ app.post('/signup', async(req,res)=>{
     console.log(err);
     res.status(500).send();
   }
+})
+
+app.get('/home', async(req, res)=>{
+  
 })
 
 

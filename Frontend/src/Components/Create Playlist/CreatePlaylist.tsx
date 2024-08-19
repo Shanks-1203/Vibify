@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react"
+import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import { toggleCreatePopup } from "../../Slices/saveToPlaylistSlice";
 import httpClient from "../../httpClient";
@@ -18,7 +18,7 @@ const CreatePlaylist = () => {
   const handleSubmit = async() => {
     const token = localStorage.getItem('token')
     try{
-      const resp = await httpClient.post('/create/playlist',{playlistName : name}, 
+      await httpClient.post('/create/playlist',{playlistName : name}, 
       {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {},
       });

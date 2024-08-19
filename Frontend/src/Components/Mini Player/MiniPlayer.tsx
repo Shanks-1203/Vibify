@@ -7,7 +7,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setDuration, setLiked, setMiniplayer, setMusicSeek, setPlay, setSongInfo, togglePlay } from '../../Slices/musicPlayerSlice';
 import { QueueState, SimpleSongType, musicPlayerState } from '../../Types/types';
 import { addToShuffledQueue, clearShuffledQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
-import { CiHeart } from "react-icons/ci";
 import fetchSongUrl from '../../Functions/fetchSongUrl';
 import { CgPlayListAdd } from "react-icons/cg";
 import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
@@ -31,10 +30,10 @@ const MiniPlayer = () => {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
           artist : shuffle ? shuffledQueue[songIndex].artistName : Queue[songIndex].artistName,
-          // lyrics: shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
           urls: {
             mp3:null,
             cover: null,
+            lyrics:null
           },
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
@@ -45,7 +44,6 @@ const MiniPlayer = () => {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
           artist : shuffle ? shuffledQueue[songIndex].artistName : Queue[songIndex].artistName,
-          // lyrics: shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
           urls: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,

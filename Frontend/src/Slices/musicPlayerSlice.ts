@@ -5,10 +5,10 @@ const initialState = {
     id: null,
     name: 'Vibify',
     artist: 'Nothing is playing',
-    lyrics: null,
     urls: {
       mp3:null,
-      cover: null
+      cover: null,
+      lyrics: null
     },
   },
   isLiked: false,

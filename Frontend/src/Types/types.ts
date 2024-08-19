@@ -35,7 +35,8 @@ export interface playlistDetails {
   playlistName: string,
   creatorId: string,
   creatorName: string,
-  likes: number
+  likes: number,
+  isLiked:boolean
 }
 
 export interface musicPlayerState {
@@ -44,10 +45,10 @@ export interface musicPlayerState {
         id: string,
         name:String,
         artist:String,
-      lyrics: String | null,
         urls: {
           mp3: string
-          cover:string
+          cover:string,
+          lyrics: string | null,
         }
       }
       isLiked:Boolean

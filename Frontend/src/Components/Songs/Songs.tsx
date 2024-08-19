@@ -84,10 +84,10 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
         id: item.songId,
         name: item.songName,
         artist: item.artistName,
-        lyrics: null,
         urls: {
           mp3:null,
-          cover: null
+          cover: null,
+          lyrics: null,
         },
       },
       songLength: item.duration,
@@ -98,7 +98,6 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
         id: item.songId,
         name: item.songName,
         artist: item.artistName,
-        lyrics: null,
         urls: await fetchSongUrl(item.songId),
       },
       songLength: item.duration,

@@ -32,10 +32,10 @@ export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, s
           id: item.songId,
           name: item.songName,
           artist: artistDetails.artistName,
-          // lyrics: item.lyrics,
           urls: {
             mp3:null,
             cover: null,
+            lyrics: null
           },
         },
         songLength: item.duration,
@@ -46,7 +46,6 @@ export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, s
           id: item.songId,
           name: item.songName,
           artist: artistDetails.artistName,
-          // lyrics: item.lyrics,
           urls: await fetchSongUrl(item.songId),
         },
         songLength: item.duration,
@@ -126,7 +125,7 @@ const ArtistSongTemplate = ({setLikeTrigger, item, index, playSong, dropdown, se
         <div className='flex items-center gap-[2rem]'>
             <p>{index+1}</p>
             <p className='w-[2.5rem] h-[2.5rem] text-[2rem] grid place-items-center rounded-lg overflow-hidden'>
-            {songCover ? <img src={songCover} alt="Cover Image" /> :<PiVinylRecord/>}
+            {songCover ? <img src={songCover} alt="Cover" /> :<PiVinylRecord/>}
             </p>
             <p>{item.songName}</p>
         </div>
@@ -147,6 +146,7 @@ const ArtistSongTemplate = ({setLikeTrigger, item, index, playSong, dropdown, se
                         </p>
                       )
                     }
+                    return null
                   })
                 }
               </div>

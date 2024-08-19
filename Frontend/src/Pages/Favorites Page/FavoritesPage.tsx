@@ -38,10 +38,10 @@ const FavoritesPage = () => {
             id: item.songId,
             name: item.songName,
             artist: item.artistName,
-            // lyrics: item.lyrics,
             urls: {
               mp3:null,
-              cover: null
+              cover: null,
+              lyrics:null
             },
           },
           songLength: item.duration,
@@ -52,7 +52,6 @@ const FavoritesPage = () => {
             id: item.songId,
             name: item.songName,
             artist: item.artistName,
-            // lyrics: item.lyrics,
             urls: await fetchSongUrl(item.songId),
           },
           songLength: item.duration,

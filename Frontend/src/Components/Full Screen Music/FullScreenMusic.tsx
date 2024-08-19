@@ -27,10 +27,10 @@ const FullScreenMusic = () => {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
           artist : shuffle ? shuffledQueue[songIndex].artistName : Queue[songIndex].artistName,
-          // lyrics : shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
           urls: {
             mp3:null,
-            cover: null
+            cover: null,
+            lyrics:null
           },
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,
@@ -41,7 +41,6 @@ const FullScreenMusic = () => {
           id: shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId,
           name: shuffle ? shuffledQueue[songIndex].songName : Queue[songIndex].songName,
           artist : shuffle ? shuffledQueue[songIndex].artistName : Queue[songIndex].artistName,
-          // lyrics : shuffle ? shuffledQueue[songIndex].lyrics : Queue[songIndex].lyrics,
           urls: await fetchSongUrl(shuffle ? shuffledQueue[songIndex].songId : Queue[songIndex].songId),
         },
         songLength: shuffle ? shuffledQueue[songIndex].duration : Queue[songIndex].duration,

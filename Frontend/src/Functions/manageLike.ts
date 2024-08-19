@@ -4,7 +4,7 @@ export const like = async(e:any, songId:string, setLikeTrigger:Function) => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
     try{
-      const res = await httpClient.post(`/like/${songId}`,{}, {
+      await httpClient.post(`/like/${songId}`,{}, {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       setLikeTrigger((prev:Boolean)=>!prev)
@@ -17,7 +17,7 @@ export const unlike = async(e:any, songId:string, setLikeTrigger:Function) => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
     try{
-      const res = await httpClient.delete(`/unlike/${songId}`, {
+      await httpClient.delete(`/like/${songId}`, {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       setLikeTrigger((prev:Boolean)=>!prev)

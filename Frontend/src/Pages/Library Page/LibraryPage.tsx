@@ -10,6 +10,7 @@ const LibraryPage = () => {
 
     const [playlists, setPlaylists] = useState();
     const [favoritesCount, setFavoritesCount] = useState();
+    const [loading, setLoading] = useState(false);
 
     const dummyPlaylist=[
         {
@@ -33,6 +34,7 @@ const LibraryPage = () => {
     ]
 
     const playlistPageCall = async() => {
+        setLoading(true)
         const token = localStorage.getItem('token');
         try {
             const resp = await httpClient.get('/home-playlists',{
@@ -46,6 +48,7 @@ const LibraryPage = () => {
         } catch(err) {
             console.error(err);
         }
+        setLoading(false)
     }
 
     useEffect(()=>{
@@ -107,7 +110,7 @@ const LibraryPage = () => {
             })}
         </div>
 
-        { !playlists &&
+        { loading &&
             <div className='w-full grid place-items-center h-screen absolute top-0 left-0 bg-black bg-opacity-80 backdrop-blur'>
                 <div className='flex flex-col gap-[1rem] items-center'>
                     <p className='font-md text-lg'>Log in to access your Library</p>

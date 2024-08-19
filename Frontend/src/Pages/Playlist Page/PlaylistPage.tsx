@@ -25,6 +25,7 @@ const PlaylistPage = () => {
   const { miniplayer, isLiked } = useSelector((state:musicPlayerState) => state.musicPlayer);
   const [likeTrigger, setLikeTrigger] = useState(false);
   const { Queue } = useSelector((state:QueueState) => state.musicQueue);
+  const [removed, setRemoved] = useState(false);
 
   const token = localStorage.getItem('token')
   const getSongs = async() => {
@@ -32,6 +33,7 @@ const PlaylistPage = () => {
       const resp = await httpClient.get(`/playlists/${playlistId}`, {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
       })
+      console.log(resp.data);
       setPlaylistDetails(resp.data.playlistDetails)
       setSongs(resp.data.songs)
     } catch(err) {
@@ -57,6 +59,7 @@ const PlaylistPage = () => {
       }
     )
     setDropdown(null);
+    setRemoved((prev)=> !prev);
   }
 
   const location = useLocation();
@@ -64,7 +67,7 @@ const PlaylistPage = () => {
   useEffect(()=>{
     getSongs();
     //eslint-disable-next-line
-  },[location, removeFromPlaylist, likeTrigger, isLiked])
+  },[location, removed, likeTrigger, isLiked])
 
   const playSong = async (item:SimpleSongType) => {
   
@@ -73,10 +76,10 @@ const PlaylistPage = () => {
           id: item.songId,
           name: item.songName,
           artist: item.artistName,
-          // lyrics: item.lyrics,
           urls: {
             mp3:null,
-            cover: null
+            cover: null,
+            lyrics:null
           },
         },
         songLength: item.duration,
@@ -87,7 +90,6 @@ const PlaylistPage = () => {
           id: item.songId,
           name: item.songName,
           artist: item.artistName,
-          // lyrics: item.lyrics,
           urls: await fetchSongUrl(item.songId),
         },
         songLength: item.duration,
@@ -126,6 +128,22 @@ const PlaylistPage = () => {
     setDropdown(null)
   }
 
+  const likePlaylist = async() => {
+
+    const token = localStorage.getItem('token')
+    const resp = await httpClient.post('/like/playlist',
+      {
+        playlistId: playlistDetails?.playlistId
+      },
+      {
+        headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+      }
+    )
+
+    console.log(resp.data);
+    
+  }
+
   return (
     <>
     <FullScreenMusic/>
@@ -140,7 +158,7 @@ const PlaylistPage = () => {
           <p className='font-semibold text-xl mt-[2rem]'>{playlistDetails?.playlistName}</p>
           <p className='mt-[0.5rem] opacity-65 text-xs'>Created by <span className='hover:underline cursor-pointer'>{playlistDetails?.creatorName}</span></p>
 
-          <PlaylistOptions likes={playlistDetails?.likes} playlistPlay={playlistPlay}/>
+          <PlaylistOptions likes={playlistDetails?.likes} isLiked={playlistDetails?.isLiked} playlistPlay={playlistPlay} likePlaylist={likePlaylist}/>
 
           { songs[0]?.songName && 
             <div className='flex flex-col gap-[1rem] mt-[2rem] text-[0.8rem]'>

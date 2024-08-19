@@ -19,12 +19,11 @@ const SaveToPlaylistPage = () => {
             const resp = await httpClient.get('/home-playlists', {
                 headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
             })
-            setPlaylist(resp.data);   
+            setPlaylist(resp.data);
         } catch(err) {
             console.error(err);
         }
     }
-
     
     const saveFunction = async() => {
         try {
@@ -47,13 +46,18 @@ const SaveToPlaylistPage = () => {
     useEffect(()=>{
         playlistCall();
         // eslint-disable-next-line
-    },[saveFunction])
+    },[])
 
     const addSelection = (index: number) => {
         setSelected(prev =>
           prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
         );
     };
+
+    const handleCancel = () => {
+        dispatch(togglePopup());
+        setSelected([])
+    }
 
   return (
     <div className={`w-full transition-all h-screen grid place-items-center fixed ${popup ? 'scale-100' : 'scale-0'}`}>
@@ -77,7 +81,7 @@ const SaveToPlaylistPage = () => {
                 }
             </div>
             <div className='w-full gap-[1rem] mt-[1.3rem] flex justify-end'>
-                <div className='py-3 text-center cursor-pointer rounded-md text-xs bg-[#80808030] w-[5rem]' onClick={()=>{dispatch(togglePopup())}}>Cancel</div>
+                <div className='py-3 text-center cursor-pointer rounded-md text-xs bg-[#80808030] w-[5rem]' onClick={handleCancel}>Cancel</div>
                 <div className='py-3 text-center cursor-pointer rounded-md text-xs bg-[#E76716] w-[5rem]' onClick={saveFunction}>Save</div>
             </div>
         </div>
