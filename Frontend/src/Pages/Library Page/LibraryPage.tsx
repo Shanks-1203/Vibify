@@ -11,6 +11,7 @@ const LibraryPage = () => {
     const [playlists, setPlaylists] = useState();
     const [favoritesCount, setFavoritesCount] = useState();
     const [loading, setLoading] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const dummyPlaylist=[
         {
@@ -34,21 +35,30 @@ const LibraryPage = () => {
     ]
 
     const playlistPageCall = async() => {
-        setLoading(true)
+        // setLoading(true)
         const token = localStorage.getItem('token');
         try {
-            const resp = await httpClient.get('/home-playlists',{
-                headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
-            });
-            setPlaylists(resp.data);
             const response = await httpClient.get('/favorites',{
                 headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
             })
-            setFavoritesCount(response.data.length);
+            
+            if(response.status===200){
+                setIsLoggedIn(true);
+                setFavoritesCount(response.data.length);
+
+                const resp = await httpClient.get('/home-playlists',{
+                headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                setPlaylists(resp.data);
+            } else {
+                setIsLoggedIn(false);
+            }
+
         } catch(err) {
+            setIsLoggedIn(false);
             console.error(err);
         }
-        setLoading(false)
+        // setLoading(false)
     }
 
     useEffect(()=>{
@@ -110,7 +120,7 @@ const LibraryPage = () => {
             })}
         </div>
 
-        { loading &&
+        { !isLoggedIn &&
             <div className='w-full grid place-items-center h-screen absolute top-0 left-0 bg-black bg-opacity-80 backdrop-blur'>
                 <div className='flex flex-col gap-[1rem] items-center'>
                     <p className='font-md text-lg'>Log in to access your Library</p>

@@ -1,7 +1,7 @@
 import React from 'react'
 import { loginCredentials, signupCredentials } from '../../Constants/LoginCredentials'
 
-const Login = ({page, setPage, setCredentials, login, signup}:{page:Boolean, setPage:Function, setCredentials:Function, login:Function, signup:Function}) => {
+const Login = ({guestSignin, page, setPage, setCredentials, login, signup}:{guestSignin:Function, page:Boolean, setPage:Function, setCredentials:Function, login:Function, signup:Function}) => {
 
     let list = page === true ? loginCredentials : signupCredentials;
 
@@ -23,7 +23,8 @@ const Login = ({page, setPage, setCredentials, login, signup}:{page:Boolean, set
         </div>
         <div className='w-[70%]'>
             <p className='h-[2.5rem] rounded-md grid place-items-center bg-[#E76716] text-white hover:bg-[#c75712] font-medium cursor-pointer' onClick={page===true ? ()=>login() : ()=>signup()}>{page === true ? 'Login' : 'Sign up'}</p>
-        <p className='text-xs text-center mt-[1rem]'><span className='opacity-65'>{page === true ? "Don't have an account?" : "Already have an account?"}</span> <span className='cursor-pointer underline' onClick={()=>setPage((prev:Boolean)=>!prev)}>{page === true ? 'Sign up' : 'Login'}</span></p>
+        <p className='text-xs text-center mt-[1rem]'><span className='opacity-65'>{page === true ? "Don't have an account?" : "Already have an account?"}</span> <span className='cursor-pointer underline hover:text-[#E76716]' onClick={()=>setPage((prev:Boolean)=>!prev)}>{page === true ? 'Sign up' : 'Login'}</span></p>
+        <p className='text-xs text-center mt-4 cursor-pointer' onClick={()=>guestSignin()}>Sign in as a guest</p>
         </div>
     </div>
   )

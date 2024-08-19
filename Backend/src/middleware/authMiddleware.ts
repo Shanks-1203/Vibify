@@ -27,12 +27,15 @@ const auth = (req:Request, res:Response, next:NextFunction) => {
         if (token) {
             jwt.verify(token, JWT_SECRET, (err, decoded) => {
                 if (err) {
-                    return res.status(403).json({ message: 'Verification error' });
+                    req.headers['userId'] = '';
+                    next()
+                } else {
+                    req.headers['userId'] = (decoded as MyJwtPayload).userId;
+                    next()
                 }
-                req.headers['userId'] = (decoded as MyJwtPayload).userId;
-                next()
             })
         } else {
+            req.headers['userId'] = '';
             next();
         }
     }

@@ -48,6 +48,9 @@ const multipleUpload = upload.fields([
 
 //Get artists in home page
 app.get('/home-artists', async(req, res) => {
+  
+  const userId = req.headers['userId'] as string;
+
     try {
       const artists = firestore.collection('artists')
 
@@ -75,7 +78,6 @@ app.get('/home-artists', async(req, res) => {
               continue;
             }
           }
-
 
           const profile = await firestore.collection('userList').doc(artistData.user_id).get();
           const username = profile.data()?.username ?? 'Unknown';
@@ -553,43 +555,44 @@ app.get('/profile', async(req,res)=>{
   
   const userId = req.headers['userId'] as string;
 
-  if(!userId) {
-    return res.status(401).send('Login to view profile');
-  }
-
-  try{
-    const user = await firestore.collection('userList').doc(userId).get()
-
-    if(user.exists){
-      const userName = user.data()?.username;
-      const extensions = ['jpeg', 'png', 'jpg'];
-      let profileUrl = null;
-
-      for (const ext of extensions) {
-        const profilePic = bucket.file(`user-profile/${userId}.${ext}`)
-
-        try{
-          const file = await profilePic.getMetadata();
-          const [url] = await profilePic.getSignedUrl({
-            action: 'read',
-            expires: '03-09-2491',
-          });
-          profileUrl = url
-          break;
-        } catch(err) {
-          continue
+  if(userId === '') {
+    res.status(200).send({ userName: 'Guest', profileUrl: null });
+  } else {
+    try{
+      const user = await firestore.collection('userList').doc(userId).get()
+  
+      if(user.exists){
+        const userName = user.data()?.username;
+        const extensions = ['jpeg', 'png', 'jpg'];
+        let profileUrl = null;
+  
+        for (const ext of extensions) {
+          const profilePic = bucket.file(`user-profile/${userId}.${ext}`)
+  
+          try{
+            const file = await profilePic.getMetadata();
+            const [url] = await profilePic.getSignedUrl({
+              action: 'read',
+              expires: '03-09-2491',
+            });
+            profileUrl = url
+            break;
+          } catch(err) {
+            continue
+          }
         }
+  
+        return res.status(200).send({ userName, profileUrl });
+  
+      } else {
+        return res.status(404).send('User not found');
       }
-
-      return res.status(200).send({ userName, profileUrl });
-
-    } else {
-      return res.status(404).send('User not found');
+    } catch(err) {
+      console.log(err);
+      res.status(500).send(err);
     }
-  } catch(err) {
-    console.log(err);
-    res.status(500).send(err);
   }
+
 })
 
 
@@ -663,19 +666,19 @@ app.post('/like/playlist', async(req,res)=>{
   const userId = req.headers['userId'] as string;
   const {playlistId} = req.body
 
-  if(!userId){
+  if(userId === ''){
     res.status(401).send('Login for this action');
-  }
-
-  try{
-    const addToLibrary = await firestore.collection('library-playlists').add({
-      playlist_id: playlistId,
-      user_id: userId
-    })
-    res.status(200).send('Playlist Liked')
-  } catch(err) {
-    console.log(err)
-    res.status(500).send('Internal Server error')
+  } else {
+    try{
+      await firestore.collection('library-playlists').add({
+        playlist_id: playlistId,
+        user_id: userId
+      })
+      res.status(200).send('Playlist Liked')
+    } catch(err) {
+      console.log(err)
+      res.status(500).send('Internal Server error')
+    }
   }
 })
 
@@ -757,35 +760,36 @@ app.get('/favorites', async(req,res)=>{
 
   if(!userId){
     res.status(401).send('Login for this action')
-  }
-
-  try {
-    const favorites = await firestore.collection('song-likes')
-    .where('user_id','==', userId)
-    .get()
-
-    if(favorites.empty){
-      res.status(200).send([])
-    } else {
-      const favoritesArray = await Promise.all(
-        favorites.docs.map(async(doc) => {
-          const songId = doc.data()?.song_id;
-          const songDetails = (await firestore.collection('songs').doc(songId).get()).data()
-
-          const artistId = songDetails?.artist_id
-          const artistUserId = (await firestore.collection('artists').doc(artistId).get()).data()?.user_id
-
-          const artistName = (await firestore.collection('userList').doc(artistUserId).get()).data()?.username
-          return { songId, songName: songDetails?.song_name, artistId, artistName, duration: songDetails?.duration }
-        })
-      )
-      res.status(200).send(favoritesArray);
+  } else {
+    try {
+      const favorites = await firestore.collection('song-likes')
+      .where('user_id','==', userId)
+      .get()
+  
+      if(favorites.empty){
+        res.status(200).send([])
+      } else {
+        const favoritesArray = await Promise.all(
+          favorites.docs.map(async(doc) => {
+            const songId = doc.data()?.song_id;
+            const songDetails = (await firestore.collection('songs').doc(songId).get()).data()
+  
+            const artistId = songDetails?.artist_id
+            const artistUserId = (await firestore.collection('artists').doc(artistId).get()).data()?.user_id
+  
+            const artistName = (await firestore.collection('userList').doc(artistUserId).get()).data()?.username
+            return { songId, songName: songDetails?.song_name, artistId, artistName, duration: songDetails?.duration }
+          })
+        )
+        res.status(200).send(favoritesArray);
+      }
+  
+    } catch(err) {
+      console.log(err)
+      res.status(500).send(err)
     }
-
-  } catch(err) {
-    console.log(err)
-    res.status(500).send(err)
   }
+
   
 })
 

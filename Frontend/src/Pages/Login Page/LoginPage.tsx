@@ -38,6 +38,10 @@ const LoginPage = () => {
     }
   }
 
+  const guestSignin = () => {
+    navigate('/');
+  }
+
   const signup = async() => {
     try{
       const resp = await httpClient.post('/signup', {
@@ -71,7 +75,7 @@ const LoginPage = () => {
       </div>
       <div className="w-[50%] grid place-items-center">
 
-      <Login page={page} setPage={setPage} setCredentials={setCredentials} login={login} signup={signup} />
+      <Login guestSignin={guestSignin} page={page} setPage={setPage} setCredentials={setCredentials} login={login} signup={signup} />
 
       </div>
     </div>
