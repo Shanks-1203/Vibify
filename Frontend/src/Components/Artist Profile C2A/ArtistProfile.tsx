@@ -21,7 +21,7 @@ export const ListenNowBtn = () => {
   )
 }
 
-export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, setDropdown, artistDetails}:{setLikeTrigger:Function, toggleDropDown:Function, songs: artistSongs[], dropdown:number|null, setDropdown:Function, artistDetails:artistDetails}) => {
+export const PopularSongs = ({setReloadTrigger, toggleDropDown, songs, dropdown, setDropdown, artistDetails}:{setReloadTrigger:Function, toggleDropDown:Function, songs: artistSongs[], dropdown:number|null, setDropdown:Function, artistDetails:artistDetails}) => {
     
     const dispatch = useDispatch()    
 
@@ -66,7 +66,7 @@ export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, s
                 {
                     songs.map((item, index)=>{
                         return(
-                            <ArtistSongTemplate setLikeTrigger={setLikeTrigger} key={index} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} item={item} index={index} playSong={playSong}/>
+                            <ArtistSongTemplate setReloadTrigger={setReloadTrigger} key={index} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} item={item} index={index} playSong={playSong}/>
                         )
                     })
                 }
@@ -75,7 +75,7 @@ export const PopularSongs = ({setLikeTrigger, toggleDropDown, songs, dropdown, s
     )
 }
 
-const ArtistSongTemplate = ({setLikeTrigger, item, index, playSong, dropdown, setDropdown, toggleDropDown}:{setLikeTrigger:Function, item:artistSongs, index:number, playSong:Function, dropdown:number|null, setDropdown:Function, toggleDropDown:Function}) => {
+const ArtistSongTemplate = ({setReloadTrigger, item, index, playSong, dropdown, setDropdown, toggleDropDown}:{setReloadTrigger:Function, item:artistSongs, index:number, playSong:Function, dropdown:number|null, setDropdown:Function, toggleDropDown:Function}) => {
   
   const [songCover, setSongCover] = useState<string | null>(null)
   const {Queue} = useSelector((state:QueueState)=> state.musicQueue)
@@ -107,14 +107,14 @@ const ArtistSongTemplate = ({setLikeTrigger, item, index, playSong, dropdown, se
   }
 
   const handleLike = (e:any, songId:string) => {
-    like(e, songId, setLikeTrigger);
+    like(e, songId, setReloadTrigger);
     if(song.id===songId){
         dispatch(setLiked(!isLiked));
     }
   }
 
   const handleUnlike = (e:any, songId:string) => {
-    unlike(e, songId, setLikeTrigger);
+    unlike(e, songId, setReloadTrigger);
     if(song.id===songId){
         dispatch(setLiked(!isLiked));
     }

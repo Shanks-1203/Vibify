@@ -14,12 +14,12 @@ const ArtistPage =() => {
   const [dropdown, setDropdown] = useState<number | null>(null);
   const [artistDetails, setArtistDetails] = useState()
   const [songs, setSongs] = useState([])
-  const [likeTrigger, setLikeTrigger] = useState(false);
+  const [reloadTrigger, setReloadTrigger] = useState(false);
   
   const { miniplayer, isLiked } = useSelector((state:musicPlayerState) => state.musicPlayer);  
+  const token = localStorage.getItem('token')
 
     const artistFetch = async() => {
-      const token = localStorage.getItem('token')
         try{
             const resp = await httpClient.get(`/artist/${artistId}`, {
               headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -34,7 +34,7 @@ const ArtistPage =() => {
     useEffect(()=>{
       artistFetch();
       //eslint-disable-next-line
-    },[likeTrigger, isLiked])
+    },[reloadTrigger, isLiked])
 
     const toggleDropDown = (index:number, event:any) => {
       event.stopPropagation();
@@ -50,8 +50,8 @@ const ArtistPage =() => {
               {artistDetails && (
                 <div>
                   <CommonHeader/>
-                  <ArtistTemplate artistDetails={artistDetails}/>
-                  <PopularSongs setLikeTrigger={setLikeTrigger} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} songs={songs} artistDetails={artistDetails}/>
+                  <ArtistTemplate setReloadTrigger={setReloadTrigger} token={token} artistDetails={artistDetails}/>
+                  <PopularSongs setReloadTrigger={setReloadTrigger} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} songs={songs} artistDetails={artistDetails}/>
                 </div>
               )}
             </div>
@@ -61,7 +61,31 @@ const ArtistPage =() => {
     
 };
 
-const ArtistTemplate = ({artistDetails}:{artistDetails:artistDetails}) => {
+const ArtistTemplate = ({artistDetails, token, setReloadTrigger}:{artistDetails:artistDetails, token:any, setReloadTrigger:Function}) => {
+
+  const followArtist = async() => {
+    try {
+      await httpClient.post(`/follow/${artistDetails.artistId}`, {}, {
+        headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
+
+      setReloadTrigger((prev:Boolean)=>!prev)
+    } catch(err){
+      console.log(err)
+    }
+  }
+
+  const unfollowArtist = async() => {
+    try {
+      await httpClient.delete(`/follow/${artistDetails.artistId}`, {
+        headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
+
+      setReloadTrigger((prev:Boolean)=>!prev)
+    } catch(err){
+      console.log(err)
+    }
+  }
   
   return(
     <div>
@@ -74,7 +98,11 @@ const ArtistTemplate = ({artistDetails}:{artistDetails:artistDetails}) => {
       </div>
       <div className='mt-[2rem] w-full flex items-center gap-[3rem]'>
         <ListenNowBtn/>
-        <p className='text-[#E76716] text-sm cursor-pointer'>Follow</p>
+        {
+          artistDetails.isFollowing ?
+          <p className='text-red-500 text-sm cursor-pointer' onClick={unfollowArtist}>Unfollow</p>:
+          <p className='text-[#E76716] text-sm cursor-pointer' onClick={followArtist}>Follow</p>
+        }
       </div>
     </div>
   )

@@ -61,7 +61,7 @@ app.get('/home-artists', async(req, res) => {
           const artistData = artistDoc.data();
 
           const extensions = ['jpg', 'jpeg', 'png'];
-          let profileURL;
+          let profileURL; 
 
           for (const ext of extensions){
 
@@ -80,9 +80,10 @@ app.get('/home-artists', async(req, res) => {
           }
 
           const profile = await firestore.collection('userList').doc(artistData.user_id).get();
+          const followers = (await firestore.collection('artist-followers').where('artist_id','==', artistDoc.id).get()).size;
           const username = profile.data()?.username ?? 'Unknown';
   
-          return { profileURL, artistId: artistDoc.id, followers: artistData.followers, artistName: username};
+          return { profileURL, artistId: artistDoc.id, followers, artistName: username};
         })
       );
 
@@ -108,15 +109,23 @@ app.get('/artist/:artistId', async(req, res) => {
       artistProfile: '',
       artistId,
       artistName: 'Musical Doe',
-      followers: 1000
+      followers: 1000,
+      isFollowing: false
     }
 
     let songs = [] as {songId: string, songName: string, duration:number}[]
 
     if(artistDoc.exists){
-      const {user_id, followers} = artistDoc.data() as {user_id: string, followers:number}
+      const {user_id} = artistDoc.data() as {user_id: string, followers:number}
+      const followers = (await firestore.collection('artist-followers').where('artist_id','==', artistDoc.id).get()).size;
       const artistName = (await firestore.collection('userList').doc(user_id).get()).data()?.username;
 
+      const followersDoc = await firestore.collection('artist-followers')
+      .where('artist_id', '==', artistDoc.id)
+      .where('user_id', '==', userId).get();
+
+      const isFollowing = !followersDoc.empty;
+      
       const extensions = ['jpeg', 'jpg', 'png'];
       let profileUrl = '';
 
@@ -136,7 +145,7 @@ app.get('/artist/:artistId', async(req, res) => {
         }
       }
 
-      artistDetails = { artistProfile: profileUrl, artistId, artistName, followers }
+      artistDetails = { artistProfile: profileUrl, artistId, artistName, followers, isFollowing }
 
       const songFetch = await firestore.collection('songs').where('artist_id','==', artistId).get()
 
@@ -635,30 +644,31 @@ app.post('/create/playlist',async(req,res)=>{
 
   if(!userId){
     res.status(401).send('Login for this action')
-  }
+  } else {
+    try{
+      if(!playlistName){
+        res.status(400).send('Playlist name required')
+      } else {
+        const createPlaylist = await firestore.collection('playlists').add({
+          playlist_name: playlistName,
+          user_id: userId
+        })
+    
+        const newId = createPlaylist.id
   
-  try{
-    if(!playlistName){
-      res.status(400).send('Playlist name required')
-    } else {
-      const createPlaylist = await firestore.collection('playlists').add({
-        playlist_name: playlistName,
-        user_id: userId
-      })
-  
-      const newId = createPlaylist.id
-
-      const addToLibrary = await firestore.collection('library-playlists').add({
-        playlist_id: newId,
-        user_id: userId
-      })
-      
-      res.status(200).send('Playlist created successfully')
+        const addToLibrary = await firestore.collection('library-playlists').add({
+          playlist_id: newId,
+          user_id: userId
+        })
+        
+        res.status(200).send('Playlist created successfully')
+      }
+    } catch(err) {
+      console.log(err)
+      res.status(500).send(err)
     }
-  } catch(err) {
-    console.log(err)
-    res.status(500).send(err)
   }
+  
 })
 
 //Like playlist
@@ -666,7 +676,7 @@ app.post('/like/playlist', async(req,res)=>{
   const userId = req.headers['userId'] as string;
   const {playlistId} = req.body
 
-  if(userId === ''){
+  if(!userId){
     res.status(401).send('Login for this action');
   } else {
     try{
@@ -797,66 +807,124 @@ app.get('/favorites', async(req,res)=>{
 //Like song
 app.post('/like/:songId', async(req,res)=>{
   const song_id = req.params.songId
-  const user_id = req.headers['userId'] as string;
+  const userId = req.headers['userId'] as string;
 
-  if(!user_id){
+  if(!userId){
     res.status(401).send('Login for this action')
-  }
-
-  try{
-    const songLike = await firestore.collection('song-likes')
-    .where('song_id', '==', song_id)
-    .where('user_id', '==', user_id)
-    .get();
-
-    const like = songLike.docs[0];
-
-    if(like){
-      res.status(200).send('Song already in favorites');
-    } else {
-
-      const songLike = await firestore.collection('song-likes').add({
-        song_id,
-        user_id
-      });
-        
-      res.status(200).send('Song added to favorites');
+  } else {
+    try{
+      const songLike = await firestore.collection('song-likes')
+      .where('song_id', '==', song_id)
+      .where('user_id', '==', userId)
+      .get();
+  
+      const like = songLike.docs[0];
+  
+      if(like){
+        res.status(200).send('Song already in favorites');
+      } else {
+  
+        const songLike = await firestore.collection('song-likes').add({
+          song_id,
+          user_id: userId
+        });
+          
+        res.status(200).send('Song added to favorites');
+      }
+    } catch(err) {
+      console.log(err);
+      res.status(500).send(err)
     }
-  } catch(err) {
-    console.log(err);
-    res.status(500).send(err)
   }
+
 })
 
 
 //Unlike song
 app.delete('/like/:songId', async (req: Request, res: Response) => {
   const song_id = req.params.songId;
-  const user_id = req.headers['userId'] as string;
+  const userId = req.headers['userId'] as string;
 
-  if (!user_id) {
+  if (!userId) {
     return res.status(401).send('Login for this action');
-  }
-
-  try {
-    const querySnapshot = await firestore.collection('song-likes')
-      .where('song_id', '==', song_id)
-      .where('user_id', '==', user_id)
-      .get();
-
-    if (querySnapshot.empty) {
-      return res.status(404).send('Like not found');
+  } else {
+    try {
+      const querySnapshot = await firestore.collection('song-likes')
+        .where('song_id', '==', song_id)
+        .where('user_id', '==', userId)
+        .get();
+  
+      if (querySnapshot.empty) {
+        return res.status(404).send('Like not found');
+      }
+  
+      const deletePromises = querySnapshot.docs.map(doc => doc.ref.delete());
+      await Promise.all(deletePromises);
+  
+      res.status(200).send('Like removed successfully');
+    } catch (err) {
+      console.log(err);
+      res.status(500).send('Internal Server Error');
     }
-
-    const deletePromises = querySnapshot.docs.map(doc => doc.ref.delete());
-    await Promise.all(deletePromises);
-
-    res.status(200).send('Like removed successfully');
-  } catch (err) {
-    console.log(err);
-    res.status(500).send('Internal Server Error');
   }
+
 });
+
+
+//Follow artist
+app.post('/follow/:artistId', async(req,res)=>{
+  const artistId = req.params.artistId;
+  const userId = req.headers['userId'] as string;
+
+  if(!userId){
+    return res.status(401).send('Login for this action');
+  } else {
+    try{
+
+      await firestore.collection('artist-followers').add({
+        artist_id: artistId,
+        user_id: userId
+      })
+
+      res.status(200).send('Artist followed successfully')
+
+    } catch(err) {
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }
+  }
+})
+
+//Unfollow artist
+app.delete('/follow/:artistId', async(req,res)=>{
+  const artistId = req.params.artistId;
+  const userId = req.headers['userId'] as string;
+
+  if(!userId){
+    return res.status(401).send('Login for this action');
+  } else {
+    try{
+
+      const followDocs = await firestore.collection('artist-followers')
+      .where('artist_id', '==', artistId)
+      .where('user_id', '==', userId)
+      .get()
+
+      if (followDocs.empty) {
+        return res.status(404).send('Record not found');
+      }
+  
+      const deletePromises = followDocs.docs.map(doc => doc.ref.delete());
+      await Promise.all(deletePromises);
+
+      res.status(200).send('Artist unfollowed successfully')
+
+    } catch(err) {
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }
+  }
+})
 
 
 // Login api

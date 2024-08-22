@@ -88,6 +88,7 @@ export interface artistDetails {
   artistName: string
   artistProfile: string
   followers: number
+  isFollowing: boolean
 }
 
 export interface profileDetails {

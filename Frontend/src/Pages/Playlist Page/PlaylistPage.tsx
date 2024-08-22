@@ -33,7 +33,6 @@ const PlaylistPage = () => {
       const resp = await httpClient.get(`/playlists/${playlistId}`, {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
       })
-      console.log(resp.data);
       setPlaylistDetails(resp.data.playlistDetails)
       setSongs(resp.data.songs)
     } catch(err) {
