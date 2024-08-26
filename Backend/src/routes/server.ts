@@ -335,7 +335,7 @@ app.get('/home-playlists', async(req,res)=> {
 
         const trackCount = (await firestore.collection('playlist-songs').where('playlist_id','==', doc.id).get()).size
 
-        return {playlistId : doc.id, playlistName: detail.playlist_name, likes: detail.likes, trackCount}
+        return {playlistId : doc.id, playlistName: detail.playlist_name, trackCount}
       })
     )
 
@@ -347,6 +347,46 @@ app.get('/home-playlists', async(req,res)=> {
 
 })
 
+app.get('/library-playlists', async(req,res)=>{
+  const userId = req.headers['userId'] as string;
+
+  if(!userId){
+    return res.status(401).send('Login for this action');
+  } else {
+    try{
+      let likedPlaylists: {playlistId : string, playlistName: string, trackCount: number}[] = [];
+      let ownPlaylists: {playlistId : string, playlistName: string, trackCount: number}[] = [];
+
+      const libraryPlaylist = await firestore.collection('library-playlists')
+      .where('user_id', '==', userId)
+      .get()
+
+      if(libraryPlaylist.empty){
+        return res.status(200).send([])
+      } else {
+        for (const doc of libraryPlaylist.docs) {
+          const detail = doc.data();
+
+          const playlistDoc = await firestore.collection('playlists').doc(detail.playlist_id).get();
+          const playlistDetail = playlistDoc.data();
+          const trackCount = (await firestore.collection('playlist-songs').where('playlist_id', '==', detail.playlist_id).get()).size;
+
+          if (playlistDetail?.user_id === userId) {
+            ownPlaylists.push({ playlistId: detail.playlist_id, playlistName: playlistDetail?.playlist_name, trackCount });
+          } else {
+            likedPlaylists.push({ playlistId: detail.playlist_id, playlistName: playlistDetail?.playlist_name, trackCount });
+          }
+        }
+
+        return res.status(200).send({ likedPlaylists, ownPlaylists });
+      }
+    } catch(err){
+      console.log(err)
+      res.status(500).send('Internal server error')
+    }
+  }
+})
+
 //get song from firebase
 app.get('/song/:songId', async (req, res) => {
   const { songId } = req.params;
@@ -355,7 +395,6 @@ app.get('/song/:songId', async (req, res) => {
     const prefix = `songs/${songId}/`;
 
     const [files] = await bucket.getFiles({ prefix });
-    let lyricsText;
 
     if (!files || files.length === 0) {
       return res.status(404).json({ error: 'Files not found' });
@@ -508,54 +547,54 @@ app.post('/edit/profile', upload.single('profilePicture'), async(req,res)=>{
 
   if(!userId) {
     return res.status(401).send('Login for this action');
-  }
-
-  try {
-
-    if(userName){
-      const userdoc = firestore.collection('userList');
-      const existingName = await userdoc.where('username','==',userName).get();
-
-      if(existingName.empty){
-        await userdoc.doc(userId).update({ username: userName })
-        res.status(200).send('Profile Updated successfully');
-      } else {
-        res.status(409).send('Name already exists');
-      }
-    }
+  } else {
+      try {
+        if(userName){
+          const userdoc = firestore.collection('userList');
+          const existingName = await userdoc.where('username','==',userName).get();
     
-    if(profileBuffer){
-      const extensions = ['jpeg', 'png', 'jpg'];
-
-      for (const ext of extensions) {
-        const profilePic = bucket.file(`user-profile/${userId}.${ext}`)
-
-        try{
-          await profilePic.delete();          
-          break;
-        } catch(err) {
-          continue
+          if(existingName.empty){
+            await userdoc.doc(userId).update({ username: userName })
+            res.status(200).send('Profile Updated successfully');
+          } else {
+            res.status(409).send('Name already exists');
+          }
         }
-      }
-
-      const fileExtension = req.file?.originalname ? path.extname(req.file.originalname) : '.jpg';
-      const newFileName = `user-profile/${userId}${fileExtension}`;
-      const file = bucket.file(newFileName);
-      await file.save(profileBuffer, {
-        metadata: { contentType: req.file?.mimetype }
-      });
         
-      res.status(200).send('Profile picture updated successfully');
-    }
-
-    if(!userName && !profileBuffer){
-      res.status(200).send('No changes')
-    }
-
-  } catch(err) {
-    console.log(err);
-    res.status(500).send('Internal server error');
+        if(profileBuffer){
+          const extensions = ['jpeg', 'png', 'jpg'];
+    
+          for (const ext of extensions) {
+            const profilePic = bucket.file(`user-profile/${userId}.${ext}`)
+    
+            try{
+              await profilePic.delete();          
+              break;
+            } catch(err) {
+              continue
+            }
+          }
+    
+          const fileExtension = req.file?.originalname ? path.extname(req.file.originalname) : '.jpg';
+          const newFileName = `user-profile/${userId}${fileExtension}`;
+          const file = bucket.file(newFileName);
+          await file.save(profileBuffer, {
+            metadata: { contentType: req.file?.mimetype }
+          });
+            
+          res.status(200).send('Profile picture updated successfully');
+        }
+    
+        if(!userName && !profileBuffer){
+          res.status(200).send('No changes')
+        }
+    
+      } catch(err) {
+        console.log(err);
+        res.status(500).send('Internal server error');
+      }
   }
+
 })
 
 
@@ -564,8 +603,8 @@ app.get('/profile', async(req,res)=>{
   
   const userId = req.headers['userId'] as string;
 
-  if(userId === '') {
-    res.status(200).send({ userName: 'Guest', profileUrl: null });
+  if(!userId) {
+    res.status(200).send({ userName: 'Guest', profileUrl: null, isLoggedIn: false });
   } else {
     try{
       const user = await firestore.collection('userList').doc(userId).get()
@@ -591,7 +630,7 @@ app.get('/profile', async(req,res)=>{
           }
         }
   
-        return res.status(200).send({ userName, profileUrl });
+        return res.status(200).send({ userName, profileUrl, isLoggedIn:true });
   
       } else {
         return res.status(404).send('User not found');

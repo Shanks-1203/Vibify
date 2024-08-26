@@ -8,13 +8,13 @@ import fetchSongUrl from '../../Functions/fetchSongUrl';
 import { IoMdMore } from "react-icons/io";
 import { songsDropDown } from '../../Constants/SongsDropDown';
 import { addMusic, addToShuffledQueue } from '../../Slices/musicQueueSlice';
-import { QueueState, SimpleSongType, musicPlayerState } from '../../Types/types';
+import { QueueState, SimpleSongType, homePageLoader, musicPlayerState } from '../../Types/types';
 import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
 import fetchSongCover from '../../Functions/fetchSongCover';
 import { FaHeart, FaRegHeart } from "react-icons/fa6";
 import { like, unlike } from '../../Functions/manageLike';
 
-const Songs = () => {
+const Songs = ({setLoading}:{setLoading:Function}) => {
 
   const [songsList, setSongsList] = useState([]);
   const [dropdown, setDropdown] = useState<number | null>(null);
@@ -23,6 +23,10 @@ const Songs = () => {
 
   const songFetch = async() => {
     const token = localStorage.getItem('token')
+    setLoading((prev:homePageLoader) =>({
+      ...prev,
+      songsLoaded: false
+    }))
     try{
       const resp = await httpClient.get('/home-songs',{
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -31,10 +35,15 @@ const Songs = () => {
     } catch(err){
       console.error(err);
     }
+    setLoading((prev:homePageLoader) =>({
+      ...prev,
+      songsLoaded: true
+    }))
   }
 
   useEffect(()=> {
     songFetch()
+    //eslint-disable-next-line
   },[likeTrigger, isLiked])
 
   const toggleDropDown = (index:number, event:any) => {

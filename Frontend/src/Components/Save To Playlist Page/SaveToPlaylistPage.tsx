@@ -8,7 +8,7 @@ import { togglePopup } from '../../Slices/saveToPlaylistSlice';
 const SaveToPlaylistPage = () => {
 
     const [playlist, setPlaylist] = useState([]);
-    const [selected, setSelected] = useState<number[]>([]);
+    const [selected, setSelected] = useState<string[]>([]);
     const {songId, popup} = useSelector((state:saveToPlaylist)=>state.saveToPlaylist)
     
     const dispatch = useDispatch();
@@ -16,10 +16,10 @@ const SaveToPlaylistPage = () => {
 
     const playlistCall = async() => {
         try{
-            const resp = await httpClient.get('/home-playlists', {
+            const resp = await httpClient.get('/library-playlists', {
                 headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
             })
-            setPlaylist(resp.data);
+            setPlaylist(resp.data.ownPlaylists);
         } catch(err) {
             console.error(err);
         }
@@ -27,7 +27,7 @@ const SaveToPlaylistPage = () => {
     
     const saveFunction = async() => {
         try {
-            await httpClient.post('/saveToPlaylist', 
+            await httpClient.post('/saveToPlaylist',
                 {
                     selectedPlaylists: selected,
                     songId: songId,
@@ -48,9 +48,9 @@ const SaveToPlaylistPage = () => {
         // eslint-disable-next-line
     },[])
 
-    const addSelection = (index: number) => {
+    const addSelection = (playlistId: string) => {
         setSelected(prev =>
-          prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+          prev.includes(playlistId) ? prev.filter(i => i !== playlistId) : [...prev, playlistId]
         );
     };
 

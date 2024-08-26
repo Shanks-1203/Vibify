@@ -5,13 +5,16 @@ import httpClient from '../../httpClient';
 import CommonHeader from '../../Components/Header/CommonHeader';
 import { FaHeart } from "react-icons/fa";
 import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
+import Loader from '../../Loaders/Loader';
 
 const LibraryPage = () => {
 
-    const [playlists, setPlaylists] = useState();
-    const [favoritesCount, setFavoritesCount] = useState();
-    const [loading, setLoading] = useState(false);
+    const [favoritesCount, setFavoritesCount] = useState(0);
+    const [loading, setLoading] = useState(true);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [likedPlaylists, setLikedPlaylists] = useState([]);
+    const [ownPlaylists, setOwnPlaylists] = useState([]);
+
 
     const dummyPlaylist=[
         {
@@ -35,30 +38,27 @@ const LibraryPage = () => {
     ]
 
     const playlistPageCall = async() => {
-        // setLoading(true)
+        setLoading(true)
         const token = localStorage.getItem('token');
         try {
             const response = await httpClient.get('/favorites',{
                 headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
             })
             
-            if(response.status===200){
-                setIsLoggedIn(true);
-                setFavoritesCount(response.data.length);
+            setIsLoggedIn(true);
+            setFavoritesCount(response.data.length);
 
-                const resp = await httpClient.get('/home-playlists',{
+            const resp = await httpClient.get('/library-playlists',{
                 headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-                setPlaylists(resp.data);
-            } else {
-                setIsLoggedIn(false);
-            }
+            });
+            setLikedPlaylists(resp.data.likedPlaylists);
+            setOwnPlaylists(resp.data.ownPlaylists);
 
         } catch(err) {
             setIsLoggedIn(false);
             console.error(err);
         }
-        // setLoading(false)
+        setLoading(false)
     }
 
     useEffect(()=>{
@@ -68,70 +68,73 @@ const LibraryPage = () => {
   return (
     <>
     <FullScreenMusic/>
-    <div className='w-full h-screen relative text-white p-[2rem]'>
+    {
+        loading ?
+        <Loader text="Your legendary collection is on it's way.."/> :
+        <div className='w-full h-screen relative text-white p-[2rem]'>
+            <CommonHeader/>
+            <p className='text-sm opacity-65 mt-[2rem]'>Your Playlists</p>
 
-        <CommonHeader/>
-        <p className='text-sm opacity-65 mt-[2rem]'>Your Playlists</p>
+            <div className='flex gap-[3rem]'>
 
-        <div className='flex gap-[3rem]'>
-
-            <Link to={playlists ? `/favorites` : '/library'}>
-                <div className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
-                    <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
-                        <FaHeart className='text-3xl text-red-500'/>
+                <Link to={isLoggedIn ? `/favorites` : '/library'}>
+                    <div className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
+                        <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
+                            <FaHeart className='text-3xl text-red-500'/>
+                        </div>
+                        <p className='mt-[0.8rem]'>Favorites</p>
+                        <p className='mt-1 opacity-65'>{favoritesCount} Tracks</p>
                     </div>
-                    <p className='mt-[0.8rem]'>Favorites</p>
-                    <p className='mt-1 opacity-65'>{favoritesCount} Tracks</p>
-                </div>
-            </Link>
+                </Link>
 
-            {(playlists ? playlists : dummyPlaylist).map((item,index)=>{
-                return (
-                    <Link key={index} to={playlists ? `/playlists/${item.playlistId}` : '/library'}>
-                        <div className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
-                            <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
-                                <PiPlaylist className='text-3xl'/>
+                {(ownPlaylists ? ownPlaylists : dummyPlaylist).map((item,index)=>{
+                    return (
+                        <Link key={index} to={ownPlaylists ? `/playlists/${item.playlistId}` : '/library'}>
+                            <div className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
+                                <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
+                                    <PiPlaylist className='text-3xl'/>
+                                </div>
+                                <p className='mt-[0.8rem]'>{item.playlistName}</p>
+                                <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
                             </div>
-                            <p className='mt-[0.8rem]'>{item.playlistName}</p>
-                            <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
-                        </div>
-                    </Link>
-                )
-            })}
-        </div>
-
-
-        <p className='text-sm opacity-65 mt-[2rem]'>Liked Playlists</p>
-        
-        <div className='flex gap-[3rem]'>
-            {(playlists ? playlists : dummyPlaylist).map((item,index)=>{
-                return (
-                    <Link key={index} to={playlists ? `/playlists/${item.playlistId}` : '/library'}>                
-                        <div key={index} className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
-                            <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
-                                <PiPlaylist className='text-3xl'/>
-                            </div>
-                            <p className='mt-[0.8rem]'>{item.playlistName}</p>
-                            <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
-                        </div>
-                    </Link>
-
-                )
-            })}
-        </div>
-
-        { !isLoggedIn &&
-            <div className='w-full grid place-items-center h-screen absolute top-0 left-0 bg-black bg-opacity-80 backdrop-blur'>
-                <div className='flex flex-col gap-[1rem] items-center'>
-                    <p className='font-md text-lg'>Log in to access your Library</p>
-                    <Link to='/login'>
-                        <p className='text-xs text-[#E76716] hover:underline'>Log in</p>
-                    </Link>
-                </div>
+                        </Link>
+                    )
+                })}
             </div>
-        }
 
-    </div>
+            
+                {(likedPlaylists ? likedPlaylists : dummyPlaylist).map((item,index)=>{
+                    return (
+                        <>
+                            <p className='text-sm opacity-65 mt-[2rem]'>Liked Playlists</p>
+                            <div className='flex gap-[3rem]'>
+                                <Link key={index} to={likedPlaylists ? `/playlists/${item.playlistId}` : '/library'}>                
+                                    <div key={index} className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
+                                        <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
+                                            <PiPlaylist className='text-3xl'/>
+                                        </div>
+                                        <p className='mt-[0.8rem]'>{item.playlistName}</p>
+                                        <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
+                                    </div>
+                                </Link>
+                            </div>
+                        </>
+                    )
+                })}
+
+            { !isLoggedIn &&
+                <div className='w-full grid place-items-center h-screen absolute top-0 left-0 bg-black bg-opacity-80 backdrop-blur'>
+                    <div className='flex flex-col gap-[1rem] items-center'>
+                        <p className='font-md text-lg'>Log in to access your Library</p>
+                        <Link to='/login'>
+                            <p className='text-xs text-[#E76716] hover:underline'>Log in</p>
+                        </Link>
+                    </div>
+                </div>
+            }
+
+        </div>
+    }
     </>
   )
 }

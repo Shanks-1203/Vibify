@@ -1,8 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const initialState: { userProfileName:String | null, profilePic:string | null } = {
+const initialState: { userProfileName:String | null, profilePic:string | null, isLoggedIn: boolean } = {
     userProfileName: null,
     profilePic: null,
+    isLoggedIn: false
 }
 
 const profileDetailsSlice = createSlice({
@@ -12,6 +13,7 @@ const profileDetailsSlice = createSlice({
         updateProfileDetails(state, action){
             state.userProfileName = action.payload.userProfileName;
             state.profilePic = action.payload.profilePic;
+            state.isLoggedIn = action.payload.isLoggedIn;
         }
     }
 })

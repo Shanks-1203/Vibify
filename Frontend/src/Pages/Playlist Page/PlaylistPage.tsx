@@ -12,6 +12,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import fetchSongUrl from '../../Functions/fetchSongUrl';
 import { setSongId, togglePopup } from '../../Slices/saveToPlaylistSlice';
 import PlaylistSongs from '../../Components/Playlist Songs/PlaylistSongs';
+import Loader from '../../Loaders/Loader';
 
 const PlaylistPage = () => {
 
@@ -26,9 +27,11 @@ const PlaylistPage = () => {
   const [likeTrigger, setLikeTrigger] = useState(false);
   const { Queue } = useSelector((state:QueueState) => state.musicQueue);
   const [removed, setRemoved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem('token')
   const getSongs = async() => {
+    setLoading(true);
     try{
       const resp = await httpClient.get(`/playlists/${playlistId}`, {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -38,6 +41,7 @@ const PlaylistPage = () => {
     } catch(err) {
       console.log(err);
     }
+    setLoading(false);
   }
 
   const addToPlaylist = (index:number, event:any) => {
@@ -147,34 +151,39 @@ const PlaylistPage = () => {
     <>
     <FullScreenMusic/>
 
-    <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'}`}>
+    {
+      loading ?
+      <Loader text='Loading the playlist...'/> :
+      <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'}`}>
 
-      {
-        songs &&
-        <div className={`w-full p-[2rem] text-white ${songs.length < 2 && 'h-screen'}`}>
+        {
+          songs &&
+          <div className={`w-full p-[2rem] text-white ${songs.length < 2 && 'h-screen'}`}>
 
-          <CommonHeader/>
-          <p className='font-semibold text-xl mt-[2rem]'>{playlistDetails?.playlistName}</p>
-          <p className='mt-[0.5rem] opacity-65 text-xs'>Created by <span className='hover:underline cursor-pointer'>{playlistDetails?.creatorName}</span></p>
+            <CommonHeader/>
+            <p className='font-semibold text-xl mt-[2rem]'>{playlistDetails?.playlistName}</p>
+            <p className='mt-[0.5rem] opacity-65 text-xs'>Created by <span className='hover:underline cursor-pointer'>{playlistDetails?.creatorName}</span></p>
 
-          <PlaylistOptions likes={playlistDetails?.likes} isLiked={playlistDetails?.isLiked} playlistPlay={playlistPlay} likePlaylist={likePlaylist}/>
+            <PlaylistOptions likes={playlistDetails?.likes} isLiked={playlistDetails?.isLiked} playlistPlay={playlistPlay} likePlaylist={likePlaylist}/>
 
-          { songs[0]?.songName && 
-            <div className='flex flex-col gap-[1rem] mt-[2rem] text-[0.8rem]'>
-            {
-              songs.map((item:SimpleSongType,index)=>{
-                return (
-                <PlaylistSongs playlistDetails={playlistDetails} setLikeTrigger={setLikeTrigger} key={index} playlistPlay={playlistPlay} removeFromPlaylist={removeFromPlaylist} addToPlaylist={addToPlaylist} addToQueue={addToQueue} item={item} index={index} dropdown={dropdown} toggleDropdown={toggleDropdown}/>
-              )})
-            }
-          </div>}
-          <p className='mt-[3rem] text-center text-xs opacity-65'>{songs[0]?.songName ? "You've Reached the end of the list." : 'The Playlist is empty'}</p>
+            { songs[0]?.songName && 
+              <div className='flex flex-col gap-[1rem] mt-[2rem] text-[0.8rem]'>
+              {
+                songs.map((item:SimpleSongType,index)=>{
+                  return (
+                  <PlaylistSongs playlistDetails={playlistDetails} setLikeTrigger={setLikeTrigger} key={index} playlistPlay={playlistPlay} removeFromPlaylist={removeFromPlaylist} addToPlaylist={addToPlaylist} addToQueue={addToQueue} item={item} index={index} dropdown={dropdown} toggleDropdown={toggleDropdown}/>
+                )})
+              }
+            </div>}
+            <p className='mt-[3rem] text-center text-xs opacity-65'>{songs[0]?.songName ? "You've Reached the end of the list." : 'The Playlist is empty'}</p>
 
-            <RelatedPlaylists/>
+              <RelatedPlaylists/>
 
-        </div>
-      }
-    </div>
+          </div>
+        }
+      </div>
+    }
+
     </>
   )
 }

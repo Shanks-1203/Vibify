@@ -14,7 +14,7 @@ const CommonHeader = () => {
 
   const [dropdown, setDropdown] = useState(false);
   const dispatch = useDispatch();
-  const {userProfileName, profilePic} = useSelector((state:profileDetails)=>state.profileDetails)
+  const {userProfileName, profilePic, isLoggedIn} = useSelector((state:profileDetails)=>state.profileDetails)
   const token = localStorage.getItem('token');
 
   const toggleDropdown = () => {
@@ -26,13 +26,14 @@ const CommonHeader = () => {
     const resp = await httpClient.get('/profile',{
       headers: token ? { 'Authorization' : `Bearer ${token}` } : {}
     })
-    const { userName, profileUrl } = resp.data;
+    const { userName, profileUrl, isLoggedIn } = resp.data;
 
     if(!profileUrl) {
       dispatch(updateProfileDetails(
         {
           userProfileName:userName,
-          profilePic: null
+          profilePic: null,
+          isLoggedIn: isLoggedIn
         }
       ))
     }
@@ -42,7 +43,8 @@ const CommonHeader = () => {
         dispatch(updateProfileDetails(
           {
             userProfileName:userName,
-            profilePic: profileUrl
+            profilePic: profileUrl,
+            isLoggedIn: isLoggedIn
           }
         ))
     }
@@ -61,9 +63,9 @@ const CommonHeader = () => {
           <div className='w-[2.3rem] p-[1px] profile bg-[#E76716] grid place-items-center h-[2.3rem] rounded-full overflow-hidden'>
             {profilePic ? <img src={profilePic} alt="Profile Picure" className='w-full h-full rounded-full'/> : <SlEarphones className='text-white'/>}
           </div>
-            <div className={`absolute w-[9rem] text-black overflow-hidden flex flex-col bg-white right-0 top-[2.5rem] transition-all rounded-lg ${!dropdown ? 'h-0' : token ? 'h-[6rem]' : 'h-[3rem]'}`}>
+            <div className={`absolute w-[9rem] text-black overflow-hidden flex flex-col bg-white right-0 top-[2.5rem] transition-all rounded-lg ${!dropdown ? 'h-0' : isLoggedIn ? 'h-[6rem]' : 'h-[3rem]'}`}>
               {
-                token ?
+                isLoggedIn ?
 
                 profileCredentials.map((item, index)=>{
                   return (

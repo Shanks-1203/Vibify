@@ -63,7 +63,7 @@ export interface musicPlayerState {
 }
 
 export type playlistType = {
-  playlistId:number
+  playlistId:string
   playlistName:String
   trackCount: number
 };
@@ -94,13 +94,20 @@ export interface artistDetails {
 export interface profileDetails {
   profileDetails: {
     userProfileName:String | null,
-    profilePic:string | null
+    profilePic:string | null,
+    isLoggedIn: boolean
   }
 }
 
-export type artistType = {
+export interface artistType {
   artistId:number
   artistName:String
   followers: number
   profileURL: string
 };
+
+export interface homePageLoader {
+  songsLoaded: boolean,
+  artistsLoaded: boolean,
+  playlistsLoaded: boolean
+}

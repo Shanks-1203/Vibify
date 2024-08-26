@@ -3,23 +3,32 @@ import { FaUser } from "react-icons/fa";
 import './popularArtists.css'
 import httpClient from '../../../httpClient';
 import { Link } from 'react-router-dom';
-import { artistType } from '../../../Types/types';
+import { artistType, homePageLoader } from '../../../Types/types';
 
-const PopularArtists = () => {
+const PopularArtists = ({setLoading}:{setLoading:Function}) => {
 
     const [artists, setArtists] = useState([]);
 
-    useEffect(()=>{
-        const artistFetch = async() => {
-            try{
-                const resp = await httpClient.get('/home-artists');
-                setArtists(resp.data);
-            } catch(err) {
-                console.error(err);
-            }
+    const artistFetch = async() => {
+        setLoading((prev:homePageLoader) =>({
+            ...prev,
+            artistsLoaded: false
+        }))
+        try{
+            const resp = await httpClient.get('/home-artists');
+            setArtists(resp.data);
+        } catch(err) {
+            console.error(err);
         }
+        setLoading((prev:homePageLoader) =>({
+            ...prev,
+            artistsLoaded: true
+        }))
+    }
 
+    useEffect(()=>{
         artistFetch()
+        //eslint-disable-next-line
     },[])
 
   return (

@@ -9,22 +9,26 @@ import { setDuration, setMusicSeek, setPlay, setSongInfo } from '../../Slices/mu
 import fetchSongUrl from '../../Functions/fetchSongUrl'
 import { addMusic, clearQueue, setPlayIndex } from '../../Slices/musicQueueSlice'
 import { useDispatch } from 'react-redux'
+import Loader from '../../Loaders/Loader'
 
 const FavoritesPage = () => {
 
     const [favorites, setFavorites] = useState<SimpleSongType[]>([]);
+    const [loading, setLoading] = useState(true);
     const dispatch = useDispatch();
 
     const fetchFavorites = async () =>{
-        const token = localStorage.getItem('token')
-        try{
-            const response = await httpClient.get('/favorites',{
-                headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
-            })
-            setFavorites(response.data);
-        } catch(err){
-            console.log(err)
-        }
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      try{
+          const response = await httpClient.get('/favorites',{
+              headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+          })
+          setFavorites(response.data);
+      } catch(err){
+          console.log(err)
+      }
+      setLoading(false)
     }
 
     useEffect(()=>{
@@ -77,23 +81,27 @@ const FavoritesPage = () => {
   return (
     <>
         <FullScreenMusic/>
-        <div className='w-full h-screen p-[2rem] bg-black text-white'>
-            <CommonHeader/>
-            <p className='font-semibold flex justify-between items-center text-xl mt-[2rem]'>
-                Favorites
-                <p className='w-[2.5rem] h-[2.5rem] rounded-full bg-[#E76716] text-xs ml-auto cursor-pointer grid place-items-center text-black' onClick={()=>playlistPlay()}><FaPlay/></p>
-            </p>
-            <div className='w-full flex flex-col gap-4 mt-[2rem] text-[0.8rem]'>
-                {
-                    favorites.map((item, index) => {
-                        return(
+        {
+          loading ?
+          <Loader text='Loading your great taste of music...'/> :
+          <div className='w-full h-screen p-[2rem] bg-black text-white'>
+              <CommonHeader/>
+              <p className='font-semibold flex justify-between items-center text-xl mt-[2rem]'>
+                  Favorites
+                  <p className='w-[2.5rem] h-[2.5rem] rounded-full bg-[#E76716] text-xs ml-auto cursor-pointer grid place-items-center text-black' onClick={()=>playlistPlay()}><FaPlay/></p>
+              </p>
+              <div className='w-full flex flex-col gap-4 mt-[2rem] text-[0.8rem]'>
+                  {
+                      favorites.map((item, index) => {
+                          return(
                             <FavoriteSongsTemplate playlistPlay={playlistPlay} item={item} key={index} index={index}/>
-                        )
-                    })
-                }
-            </div>
-            <p className='mt-[3rem] text-center text-xs opacity-65'>Songs that you've liked will appear here</p>
-        </div>
+                          )
+                      })
+                  }
+              </div>
+              <p className='mt-[3rem] text-center text-xs opacity-65'>{favorites.length === 0 ? "It's never too late to like a song." :"Looks like you've hit the bottom."}</p>
+          </div>
+        }
     </>
   )
 }
