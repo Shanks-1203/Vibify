@@ -19,7 +19,7 @@ const Loader = ({text}:{text:string}) => {
     }, []);
 
   return (
-    <div className='w-full h-[92vh] bg-black grid place-items-center'>
+    <div className='w-full h-[94vh] bg-black grid place-items-center'>
         <div className='flex flex-col items-center gap-[1rem]'>
             <img src={loading} alt="loading" className={`w-[2rem] invert animate-bounce ${loadingColor ? 'invert' : 'orange-filter'}`} />
             <p className='text-white'>{text}</p>

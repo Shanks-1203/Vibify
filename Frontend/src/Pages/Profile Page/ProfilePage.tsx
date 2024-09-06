@@ -15,10 +15,7 @@ const ProfilePage = () => {
   const [newProfile, setNewProfile] = useState('')
   const [fileToSend, setFileToSend] = useState<Blob | null>()
   const [reloadTrigger, setReloadTrigger] = useState<boolean>(true)
-  const token = localStorage.getItem('token')
-
-  console.log(newProfile);
-  
+  const token = localStorage.getItem('token')  
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 

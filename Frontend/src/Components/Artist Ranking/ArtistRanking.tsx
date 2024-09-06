@@ -43,7 +43,7 @@ const ArtistRanking = () => {
   ]
 
   return (
-    <div className='pt-4'>
+    <div className='pt-4 h-[50vh]'>
       <p className='text-sm opacity-65'>Top Artists</p>
       <div className='flex flex-col gap-2 mt-4'>
         {rank.map((item) => {

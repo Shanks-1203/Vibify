@@ -3,7 +3,6 @@ import httpClient from '../../httpClient';
 import PlaylistOptions from '../../Components/Playlist Options/PlaylistOptions';
 import RelatedPlaylists from '../../Components/Related Playlists/RelatedPlaylists';
 import { useDispatch, useSelector } from 'react-redux';
-import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
 import { setDuration, setLiked, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import { addMusic, addToShuffledQueue, clearQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import { QueueState, SimpleSongType, musicPlayerState, playlistDetails } from '../../Types/types';
@@ -30,8 +29,11 @@ const PlaylistPage = () => {
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem('token')
+
   const getSongs = async() => {
-    setLoading(true);
+    if(!playlistDetails){
+      setLoading(true);
+    }
     try{
       const resp = await httpClient.get(`/playlists/${playlistId}`, {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -41,7 +43,9 @@ const PlaylistPage = () => {
     } catch(err) {
       console.log(err);
     }
-    setLoading(false);
+    if(!playlistDetails){
+      setLoading(false);
+    }
   }
 
   const addToPlaylist = (index:number, event:any) => {
@@ -149,8 +153,6 @@ const PlaylistPage = () => {
 
   return (
     <>
-    <FullScreenMusic/>
-
     {
       loading ?
       <Loader text='Loading the playlist...'/> :

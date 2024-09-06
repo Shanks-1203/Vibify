@@ -82,7 +82,7 @@ const SaveToPlaylistPage = () => {
             </div>
             <div className='w-full gap-[1rem] mt-[1.3rem] flex justify-end'>
                 <div className='py-3 text-center cursor-pointer rounded-md text-xs bg-[#80808030] w-[5rem]' onClick={handleCancel}>Cancel</div>
-                <div className='py-3 text-center cursor-pointer rounded-md text-xs bg-[#E76716] w-[5rem]' onClick={saveFunction}>Save</div>
+                <div className={`py-3 text-center cursor-pointer rounded-md text-xs w-[5rem] ${selected.length > 0 ? 'bg-[#E76716]' : 'bg-[#808080] opacity-65'}`} onClick={saveFunction}>Save</div>
             </div>
         </div>
         </div>

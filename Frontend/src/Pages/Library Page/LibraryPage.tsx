@@ -4,35 +4,32 @@ import { Link } from 'react-router-dom'
 import httpClient from '../../httpClient';
 import CommonHeader from '../../Components/Header/CommonHeader';
 import { FaHeart } from "react-icons/fa";
-import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
 import Loader from '../../Loaders/Loader';
+import { libraryPlaylists } from '../../Types/types';
 
 const LibraryPage = () => {
 
     const [favoritesCount, setFavoritesCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [likedPlaylists, setLikedPlaylists] = useState([]);
-    const [ownPlaylists, setOwnPlaylists] = useState([]);
+    const [likedPlaylists, setLikedPlaylists] = useState<libraryPlaylists[]>();
+    const [ownPlaylists, setOwnPlaylists] = useState<libraryPlaylists[]>();
 
 
     const dummyPlaylist=[
         {
-            playlistId:0,
+            playlistId:'0',
             playlistName: 'Playlist',
-            likes: 0,
             trackCount: 12
         },
         {
-            playlistId:0,
+            playlistId:'0',
             playlistName: 'Playlist',
-            likes: 0,
             trackCount: 12
         },
         {
-            playlistId:0,
+            playlistId:'0',
             playlistName: 'Playlist',
-            likes: 0,
             trackCount: 12
         }
     ]
@@ -67,11 +64,10 @@ const LibraryPage = () => {
 
   return (
     <>
-    <FullScreenMusic/>
     {
         loading ?
         <Loader text="Your legendary collection is on it's way.."/> :
-        <div className='w-full h-screen relative text-white p-[2rem]'>
+        <div className='w-full min-h-[94vh] relative text-white p-[2rem]'>
             <CommonHeader/>
             <p className='text-sm opacity-65 mt-[2rem]'>Your Playlists</p>
 
@@ -103,27 +99,27 @@ const LibraryPage = () => {
             </div>
 
             
+            {!(likedPlaylists?.length === 0) && <p className='text-sm opacity-65 mt-[2rem]'>Liked Playlists</p>}
+            <div className='flex gap-[3rem]'>
                 {(likedPlaylists ? likedPlaylists : dummyPlaylist).map((item,index)=>{
                     return (
                         <>
-                            <p className='text-sm opacity-65 mt-[2rem]'>Liked Playlists</p>
-                            <div className='flex gap-[3rem]'>
-                                <Link key={index} to={likedPlaylists ? `/playlists/${item.playlistId}` : '/library'}>                
-                                    <div key={index} className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
-                                        <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
-                                            <PiPlaylist className='text-3xl'/>
-                                        </div>
-                                        <p className='mt-[0.8rem]'>{item.playlistName}</p>
-                                        <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
+                            <Link key={index} to={likedPlaylists ? `/playlists/${item.playlistId}` : '/library'}>                
+                                <div key={index} className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
+                                    <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
+                                        <PiPlaylist className='text-3xl'/>
                                     </div>
-                                </Link>
-                            </div>
+                                    <p className='mt-[0.8rem]'>{item.playlistName}</p>
+                                    <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
+                                </div>
+                            </Link>
                         </>
                     )
                 })}
+            </div>
 
             { !isLoggedIn &&
-                <div className='w-full grid place-items-center h-screen absolute top-0 left-0 bg-black bg-opacity-80 backdrop-blur'>
+                <div className='w-full grid place-items-center h-[92vh] absolute top-0 left-0 bg-black bg-opacity-80 backdrop-blur'>
                     <div className='flex flex-col gap-[1rem] items-center'>
                         <p className='font-md text-lg'>Log in to access your Library</p>
                         <Link to='/login'>

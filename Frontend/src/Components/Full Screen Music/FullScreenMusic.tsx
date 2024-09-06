@@ -100,7 +100,7 @@ const FullScreenMusic = () => {
     }
 
   return (
-    <div className={`${miniplayer==='max' ? 'w-[85%] h-screen p-[3rem]' : 'w-0 h-0'} overflow-hidden flex fixed text-white z-10 bg-black`}>
+    <div className={`${miniplayer==='max' ? 'w-[85%] h-screen p-[3rem] right-0' : 'w-0 h-0'} overflow-hidden flex fixed bottom-0 transition-all text-white z-10 bg-black`}>
       <div className='w-[60%] h-full flex flex-col justify-center relative items-center'>
       <div className='flex items-center absolute top-3 right-7'>
             <p className='text-2xl cursor-pointer transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'on'}))}><MdKeyboardArrowDown/></p>

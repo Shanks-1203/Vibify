@@ -22,10 +22,10 @@ const CreatePlaylist = () => {
       {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {},
       });
+      dispatch(toggleCreatePopup())
     } catch(err) {
       console.log(err);
     }
-    dispatch(toggleCreatePopup())
   }
 
   return (
@@ -42,7 +42,7 @@ const CreatePlaylist = () => {
 
           <div className='flex justify-end gap-[1rem] items-center'>
             <p className='py-3 w-[5rem] text-center rounded-md cursor-pointer text-xs bg-[#80808030]' onClick={()=>dispatch(toggleCreatePopup())}>Cancel</p>
-            <p className='py-3 w-[5rem] text-center rounded-md cursor-pointer text-xs bg-[#E76716]' onClick={handleSubmit}>Create</p>
+            <p className={`py-3 w-[5rem] text-center rounded-md cursor-pointer text-xs bg-[#E76716] ${name ? 'bg-[#E76716]' : 'bg-[#808080] opacity-65'}`} onClick={handleSubmit}>Create</p>
           </div>
         </div>
       </div>

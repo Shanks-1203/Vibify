@@ -4,7 +4,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import MiniSeekbar from '../Seekbar/Mini Seekbar/MiniSeekbar';
 import MiniControls from '../Controls/Mini Controls/MiniControls';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDuration, setLiked, setMiniplayer, setMusicSeek, setPlay, setSongInfo, togglePlay } from '../../Slices/musicPlayerSlice';
+import { setDuration, setLiked, setMiniplayer, setMusicSeek, setPlay, setSongInfo } from '../../Slices/musicPlayerSlice';
 import { QueueState, SimpleSongType, musicPlayerState } from '../../Types/types';
 import { addToShuffledQueue, clearShuffledQueue, setPlayIndex } from '../../Slices/musicQueueSlice';
 import fetchSongUrl from '../../Functions/fetchSongUrl';
@@ -167,7 +167,7 @@ const MiniPlayer = () => {
     
     useEffect(() => {
         if (!play) {
-            return;
+          return;
         }
 
         const intervalId = setInterval(() => {

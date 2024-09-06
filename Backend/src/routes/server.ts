@@ -1,5 +1,5 @@
 import express, { Request, Response }  from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import path from 'path';
 import admin from 'firebase-admin';
@@ -28,10 +28,6 @@ admin.initializeApp({
 const bucket = admin.storage().bucket();
 
 const firestore = admin.firestore();
-
-interface MyJwtPayload extends JwtPayload {
-  userId: string;
-}
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -96,6 +92,64 @@ app.get('/home-artists', async(req, res) => {
 });
 
 
+//Fetch following artist
+app.get('/artists/following', async(req, res)=>{
+
+  const userId = req.headers['userId'] as string;
+
+  if(!userId){
+    return res.status(401).send('Login for this action');
+  } else {
+    try{
+      const following = await firestore.collection('artist-followers')
+      .where('user_id', '==', userId)
+      .get()
+
+      let followingArtists = []
+
+      if(following.empty){
+        return res.status(200).send([]);
+      } else {
+        followingArtists = await Promise.all(
+          following.docs.map(async(doc) => {
+            const artistId = doc.data().artist_id;
+
+            const user_id = (await firestore.collection('artists').doc(artistId).get()).data()?.user_id
+            const artistName = (await firestore.collection('userList').doc(user_id).get()).data()?.username
+            const followersCount = (await firestore.collection('artist-followers').where('artist_id', '==', artistId).get()).size
+            
+            const extensions = ['jpeg', 'jpg', 'png'];
+            let profileUrl = '';
+
+            for (const ext of extensions) {
+              const profilePic = bucket.file(`user-profile/${user_id}.${ext}`)
+
+              try{
+                await profilePic.getMetadata();
+                const [url] = await profilePic.getSignedUrl({
+                  action: 'read',
+                  expires: '03-09-2491',
+                });
+                profileUrl = url
+                break;
+              } catch(err) {
+                continue
+              }
+            }
+            
+            return {profilePic: profileUrl, artistId, artistName, followersCount}
+          })
+        )
+      }
+      res.status(200).send(followingArtists)
+    } catch(err){
+      console.log(err);
+      res.status(500).send('Internal server error')
+    }
+  }
+})
+
+
 // Artist details page
 app.get('/artist/:artistId', async(req, res) => {
 
@@ -133,7 +187,7 @@ app.get('/artist/:artistId', async(req, res) => {
         const profilePic = bucket.file(`user-profile/${user_id}.${ext}`)
 
         try{
-          const file = await profilePic.getMetadata();
+          await profilePic.getMetadata();
           const [url] = await profilePic.getSignedUrl({
             action: 'read',
             expires: '03-09-2491',
@@ -671,6 +725,44 @@ app.get('/pins', async(req,res)=>{
   } catch(err) {
     console.log(err);
     res.status(500).send('Internal Server error');
+  }
+})
+
+app.post('/add/pins', async(req, res)=>{
+  const userId = req.headers['userId'] as string;
+  const playlistId = req.body.playlistId;
+
+  if(!userId){
+    res.status(401).send('Login for this action')
+  } else {
+
+    if(!playlistId){
+      res.status(400).send('Please select the playlist')
+    } else {
+      try{
+        const pinCollection = firestore.collection('pinlist')
+  
+        const pinExists = await pinCollection
+        .where('playlist_id', '==', playlistId)
+        .where('user_id', '==', userId).get();
+  
+        if(pinExists.empty){
+          await pinCollection.add({
+            playlist_id: playlistId,
+            user_id: userId
+          })
+  
+          res.status(200).send('Pin added successfully')
+        } else {
+          res.status(409).send('Pin already exists')
+        }
+  
+      } catch(err) {
+        console.log(err);
+        res.status(500).send('Internal Server error');
+      }
+    }
+
   }
 })
 

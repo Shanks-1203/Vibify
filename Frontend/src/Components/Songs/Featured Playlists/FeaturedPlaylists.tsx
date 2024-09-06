@@ -3,19 +3,15 @@ import { BiSolidPlaylist } from "react-icons/bi";
 import httpClient from '../../../httpClient';
 import { IoMdMore } from "react-icons/io";
 import { Link } from 'react-router-dom';
-import { homePageLoader, playlistType, saveToPlaylist } from '../../../Types/types';
+import { playlistType, saveToPlaylist } from '../../../Types/types';
 import { useSelector } from 'react-redux';
 
-const FeaturedPlaylists = ({setLoading}:{setLoading:Function}) => {
+const FeaturedPlaylists = () => {
 
   const [playlistList, setPlaylistList] = useState<playlistType[]>([]);
   const {popup, createPopup} = useSelector((state:saveToPlaylist)=>state.saveToPlaylist)
 
   const playlistFetch = async() => {
-    setLoading((prev:homePageLoader) =>({
-      ...prev,
-      playlistsLoaded: false
-    }))
     try{
       const token = localStorage.getItem('token');
       const resp = await httpClient.get('/library-playlists',{
@@ -29,10 +25,6 @@ const FeaturedPlaylists = ({setLoading}:{setLoading:Function}) => {
     } catch(err) {
       console.log(err);
     }
-    setLoading((prev:homePageLoader) =>({
-      ...prev,
-      playlistsLoaded: true
-    }))
   }
   
   useEffect(()=>{

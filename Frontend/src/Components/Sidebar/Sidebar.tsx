@@ -5,10 +5,12 @@ import routes from '../../Constants/RoutingOptions'
 import { CiHeart } from "react-icons/ci";
 import { GoPin } from "react-icons/go";
 import { FiPlus } from "react-icons/fi";
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { toggleCreatePopup } from '../../Slices/saveToPlaylistSlice';
 import httpClient from '../../httpClient';
 import { MdOutlineLibraryAdd } from "react-icons/md";
+import { togglePopup, setPins } from '../../Slices/addToQuickAccessSlice';
+import { addToQuickAccess } from '../../Types/types';
 
 const Sidebar = () => {
 
@@ -17,15 +19,19 @@ const Sidebar = () => {
   const [loc2, setLoc2] = useState<string>('');
   const location = useLocation();
   const dispatch = useDispatch();
-  const [pins, setPins] = useState([]);
+  const { popup, pins } = useSelector((state:addToQuickAccess)=>state.addToQuickAccess);
 
   const getPins = async() => {
     const token = localStorage.getItem('token');
+    try{
+      const resp = await httpClient.get('/pins',{
+        headers: token ? {Authorization: `Bearer ${token}`} : {}
+      })
+      dispatch(setPins(resp.data));
+    } catch(err) {
+      console.log(err);
+    }
 
-    const resp = await httpClient.get('/pins',{
-      headers: token ? {Authorization: `Bearer ${token}`} : {}
-    })
-    setPins(resp.data);
   }
 
   useEffect(() => {
@@ -33,7 +39,8 @@ const Sidebar = () => {
     setLoc(pathParts[1] || '');
     setLoc2(pathParts[2] || '');
     getPins();
-  }, [location]);
+    //eslint-disable-next-line
+  }, [location, popup]);
 
   return (
     <div className='h-screen py-[2rem] flex flex-col text-[0.8rem] gap-[2.5rem] text-white'>
@@ -93,7 +100,7 @@ const Sidebar = () => {
                 })
               }
                 { pins.length < 3 &&
-                  <div className='flex items-center gap-3 px-4 cursor-pointer py-3 hover:bg-[#ffffff30]'>
+                  <div className='flex items-center gap-3 px-4 cursor-pointer py-3 hover:bg-[#ffffff30]' onClick={()=> dispatch(togglePopup())}>
                     <div className='w-[15%]'><FiPlus className='text-2xl rounded-full text-pink-500' /></div>
                     <p>Add to Quick Access</p>
                   </div>

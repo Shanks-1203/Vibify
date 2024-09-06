@@ -1,5 +1,4 @@
 import CommonHeader from '../../Components/Header/CommonHeader'
-import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic'
 import FavoriteSongsTemplate from '../../Components/Favorite Songs Template/FavoriteSongsTemplate'
 import { FaPlay } from 'react-icons/fa'
 import { useEffect, useState } from 'react'
@@ -65,7 +64,6 @@ const FavoritesPage = () => {
         dispatch(setMusicSeek({seek:0}));
         dispatch(setDuration({duration:0}));
     
-        sessionStorage.setItem("songId", item?.songId?.toString());
     }
   
     const playlistPlay = ( songNumber:number = 0 ) => {
@@ -80,7 +78,6 @@ const FavoritesPage = () => {
 
   return (
     <>
-        <FullScreenMusic/>
         {
           loading ?
           <Loader text='Loading your great taste of music...'/> :

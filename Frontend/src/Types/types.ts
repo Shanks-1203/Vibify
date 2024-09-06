@@ -76,6 +76,13 @@ export interface saveToPlaylist {
   }
 }
 
+export interface addToQuickAccess {
+  addToQuickAccess: {
+    pins: {playlistId:string, playlistName: string}[]
+    popup: boolean
+  }
+}
+
 export interface artistSongs {
   songId: string
   songName: string
@@ -109,5 +116,10 @@ export interface artistType {
 export interface homePageLoader {
   songsLoaded: boolean,
   artistsLoaded: boolean,
-  playlistsLoaded: boolean
+}
+
+export interface libraryPlaylists {
+    playlistId: string,
+    playlistName: string,
+    trackCount: number
 }

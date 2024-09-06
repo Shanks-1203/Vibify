@@ -3,10 +3,11 @@ import { FaUser } from 'react-icons/fa';
 import httpClient from '../../httpClient';
 import { ListenNowBtn, PopularSongs } from '../../Components/Artist Profile C2A/ArtistProfile';
 import { useSelector } from 'react-redux';
-import FullScreenMusic from '../../Components/Full Screen Music/FullScreenMusic';
 import CommonHeader from '../../Components/Header/CommonHeader';
 import { artistDetails, musicPlayerState } from '../../Types/types';
 import { useParams } from 'react-router-dom';
+import Loader from '../../Loaders/Loader';
+import SpinLoader from '../../Loaders/Spin Loader/SpinLoader';
 
 const ArtistPage =() => {
 
@@ -15,20 +16,32 @@ const ArtistPage =() => {
   const [artistDetails, setArtistDetails] = useState()
   const [songs, setSongs] = useState([])
   const [reloadTrigger, setReloadTrigger] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [spinLoad, setSpinLoad] = useState(false);
   
   const { miniplayer, isLiked } = useSelector((state:musicPlayerState) => state.musicPlayer);  
   const token = localStorage.getItem('token')
 
     const artistFetch = async() => {
-        try{
-            const resp = await httpClient.get(`/artist/${artistId}`, {
-              headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
-            });
-            setArtistDetails(resp?.data.artistDetails);
-            setSongs(resp?.data.songs)
-        } catch(err) {
-            console.error(err);
-        }
+      if(!artistDetails){
+        setLoading(true)
+      }
+      setSpinLoad(true)
+      
+      try{
+        const resp = await httpClient.get(`/artist/${artistId}`, {
+          headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        setArtistDetails(resp?.data.artistDetails);
+        setSongs(resp?.data.songs)
+      } catch(err) {
+        console.error(err);
+      }
+
+      setSpinLoad(false)
+      if(!artistDetails){
+        setLoading(false)
+      }
     }
 
     useEffect(()=>{
@@ -43,25 +56,27 @@ const ArtistPage =() => {
 
     return (
       <>
-        <FullScreenMusic/>
-
-        <div className='w-full h-screen p-[2rem]'>
-            <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'}`}>
-              {artistDetails && (
-                <div>
-                  <CommonHeader/>
-                  <ArtistTemplate setReloadTrigger={setReloadTrigger} token={token} artistDetails={artistDetails}/>
-                  <PopularSongs setReloadTrigger={setReloadTrigger} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} songs={songs} artistDetails={artistDetails}/>
-                </div>
-              )}
-            </div>
-        </div>
+        {
+          loading ?
+          <Loader text='Artist is on the way...'/> :
+          <div className='w-full min-h-[94vh] p-[2rem]'>
+              <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'}`}>
+                {artistDetails && (
+                  <div>
+                    <CommonHeader/>
+                    <ArtistTemplate setReloadTrigger={setReloadTrigger} token={token} artistDetails={artistDetails} spinLoad={spinLoad} />
+                    <PopularSongs setReloadTrigger={setReloadTrigger} toggleDropDown={toggleDropDown} dropdown={dropdown} setDropdown={setDropdown} songs={songs} artistDetails={artistDetails}/>
+                  </div>
+                )}
+              </div>
+          </div>
+        }
       </>
     );
     
 };
 
-const ArtistTemplate = ({artistDetails, token, setReloadTrigger}:{artistDetails:artistDetails, token:any, setReloadTrigger:Function}) => {
+const ArtistTemplate = ({artistDetails, token, setReloadTrigger, spinLoad}:{artistDetails:artistDetails, token:any, setReloadTrigger:Function, spinLoad:Boolean}) => {
 
   const followArtist = async() => {
     try {
@@ -80,7 +95,7 @@ const ArtistTemplate = ({artistDetails, token, setReloadTrigger}:{artistDetails:
       await httpClient.delete(`/follow/${artistDetails.artistId}`, {
         headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
       })
-
+      
       setReloadTrigger((prev:Boolean)=>!prev)
     } catch(err){
       console.log(err)
@@ -99,9 +114,10 @@ const ArtistTemplate = ({artistDetails, token, setReloadTrigger}:{artistDetails:
       <div className='mt-[2rem] w-full flex items-center gap-[3rem]'>
         <ListenNowBtn/>
         {
-          artistDetails.isFollowing ?
-          <p className='text-red-500 text-sm cursor-pointer' onClick={unfollowArtist}>Unfollow</p>:
-          <p className='text-[#E76716] text-sm cursor-pointer' onClick={followArtist}>Follow</p>
+          spinLoad ? <SpinLoader/> :
+            artistDetails.isFollowing ?
+            <p className='text-red-500 text-sm cursor-pointer' onClick={unfollowArtist}>Unfollow</p>:
+            <p className='text-[#E76716] text-sm cursor-pointer' onClick={followArtist}>Follow</p>
         }
       </div>
     </div>

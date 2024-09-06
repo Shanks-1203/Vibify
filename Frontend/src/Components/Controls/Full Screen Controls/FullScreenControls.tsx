@@ -11,26 +11,32 @@ import { useDispatch, useSelector } from 'react-redux'
 const FullScreenControls = ({prevButton, nextButton} : {prevButton:Function, nextButton:Function}) => {
 
     const {Queue, playIndex} = useSelector((state:QueueState)=> state.musicQueue)
-    const { play, repeat, shuffle } = useSelector((state:musicPlayerState) => state.musicPlayer);
+    const { play, repeat, shuffle, song } = useSelector((state:musicPlayerState) => state.musicPlayer);
 
 
     const dispatch = useDispatch();
 
     const toggle = () => {
-      dispatch(togglePlay())
+      if(song.id){
+        dispatch(togglePlay())
+      }
     }
 
     const toggleShuffleFunction = () => {
-      dispatch(toggleShuffle());
+      if(Queue.length>1){
+        dispatch(toggleShuffle());
+      }
     }
 
     const setRepeatFunction = () => {
-      if(repeat==='off'){
-        dispatch(setRepeat({repeat:'on'}));
-      } else if (repeat === 'on'){
-        dispatch(setRepeat({repeat:'once'}));
-      } else {
-        dispatch(setRepeat({repeat:'off'}));
+      if(song.id){
+        if(repeat==='off'){
+          dispatch(setRepeat({repeat:'on'}));
+        } else if (repeat === 'on'){
+          dispatch(setRepeat({repeat:'once'}));
+        } else {
+          dispatch(setRepeat({repeat:'off'}));
+        }
       }
     }
 

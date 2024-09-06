@@ -22,7 +22,6 @@ const CommonHeader = () => {
   }
 
   const getUserDetails = async() => {
-    const token = localStorage.getItem('token');
     const resp = await httpClient.get('/profile',{
       headers: token ? { 'Authorization' : `Bearer ${token}` } : {}
     })
