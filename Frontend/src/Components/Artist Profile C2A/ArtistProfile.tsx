@@ -15,7 +15,7 @@ import { like, unlike } from '../../Functions/manageLike'
 
 export const ListenNowBtn = () => {
   return (
-    <div className='px-4 cursor-pointer py-[0.7rem] flex justify-center gap-[0.5rem] items-center text-[0.75rem] font-medium rounded-full text-black bg-[#E76716]'>
+    <div className='px-4 cursor-pointer py-[0.7rem] flex justify-center gap-[0.5rem] items-center font-medium rounded-full text-black bg-[#E76716]'>
         Listen Now
     </div>
   )
@@ -61,8 +61,8 @@ export const PopularSongs = ({setReloadTrigger, toggleDropDown, songs, dropdown,
 
     return (
         <div className='mt-[2rem]'>
-            <p className='font-semibold text-lg text-white'>Popular Songs</p>
-            <div className='mt-[2rem] w-full flex flex-col gap-1'>
+            <p className='font-semibold text-xl text-white'>Popular Songs</p>
+            <div className='mt-[2rem] w-full flex flex-col gap-4'>
                 {
                     songs.map((item, index)=>{
                         return(
@@ -121,27 +121,27 @@ const ArtistSongTemplate = ({setReloadTrigger, item, index, playSong, dropdown, 
   }
   
   return (
-    <div className={`w-full cursor-pointer py-[0.8rem] rounded-md flex justify-between text-sm hover:bg-[#80808040] items-center text-white px-[2rem] ${song.id === item.songId && 'bg-[#80808040]'}`} onClick={()=>playSong(item)}>
+    <div className={`w-full cursor-pointer py-3 rounded-md flex justify-between hover:bg-[#80808040] items-center text-white px-[2rem] ${song.id === item.songId && 'bg-[#80808040]'}`} onClick={()=>playSong(item)}>
         <div className='flex items-center gap-[2rem]'>
             <p>{index+1}</p>
-            <p className='w-[2.5rem] h-[2.5rem] text-[2rem] grid place-items-center rounded-lg overflow-hidden'>
-            {songCover ? <img src={songCover} alt="Cover" /> :<PiVinylRecord/>}
+            <p className='w-[3.5rem] h-[3.5rem] text-[2rem] grid place-items-center rounded-lg overflow-hidden'>
+              {songCover ? <img src={songCover} alt="song cover" /> :<PiVinylRecord/>}
             </p>
             <p>{item.songName}</p>
         </div>
         <div className='flex items-center'>
-        <p className='text-[1.04rem] ml-auto'>{item.isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>handleUnlike(e, item.songId)}/> : <FaRegHeart className='opacity-65' onClick={(e)=>handleLike(e, item.songId)}/>}</p>
+        <p className='text-[1.3rem] ml-auto'>{item.isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>handleUnlike(e, item.songId)}/> : <FaRegHeart className='opacity-65' onClick={(e)=>handleLike(e, item.songId)}/>}</p>
           <p className='text-sm mx-[3rem]'>{durationCalculator(item.duration)}</p>
           <div className='p-[0.5rem] relative hover:bg-[#80808040] rounded-full' onClick={(e)=>toggleDropDown(index, e)}>
-              <IoMdMore className='text-xl'/>
+              <IoMdMore className='text-2xl'/>
               { dropdown===index &&
-              <div className='absolute w-[10rem] left-[-10rem] top-0 rounded-lg overflow-hidden z-10 bg-black'>
+              <div className='absolute w-[12rem] left-[-12rem] top-0 rounded-lg overflow-hidden z-10 bg-black border-2 border-[#80808080]'>
                 {
                   songsDropDown.map((item, index)=>{
                     if(index<3){
                       return (
-                        <p key={index} className='w-full text-xs gap-4 px-[1rem] h-[3rem] flex items-center hover:bg-[#80808040]' onClick={(event) => item.function === 'atq' ? addToQueue(event) : item.function==='stp' && addToPlaylist()}>
-                          <item.icon className='text-xl'/>
+                        <p key={index} className='w-full gap-4 px-[1rem] h-[4rem] flex items-center hover:bg-[#80808040]' onClick={(event) => item.function === 'atq' ? addToQueue(event) : item.function==='stp' && addToPlaylist()}>
+                          <item.icon className='text-2xl'/>
                           {item.name}
                         </p>
                       )

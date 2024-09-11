@@ -236,12 +236,12 @@ const MiniPlayer = () => {
         
         <div className='flex items-center w-[15%]'>
             <div className='grid place-items-center'>
-            <div className='w-[2.7rem] h-[2.7rem] bg-white text-black grid place-items-center text-3xl'>{song.urls.cover ? <img src={song.urls.cover} alt="cover" className='w-full h-full'/> :<PiVinylRecord/>}</div>
+            <div className='w-[3.4rem] h-[3.4rem] bg-white text-black grid place-items-center text-4xl'>{song.urls.cover ? <img src={song.urls.cover} alt="cover" className='w-full h-full'/> :<PiVinylRecord/>}</div>
             </div>
         
             <div className='w-full ml-[1rem]'>
-                <p className='text-sm font-medium'>{song.name}</p>
-                <p className='mt-[0.2rem] text-xs opacity-80'>{song.artist}</p>
+                <p className='font-medium'>{song.name}</p>
+                <p className='mt-[0.2rem] text-sm opacity-80'>{song.artist}</p>
             </div>
         </div>
 
@@ -251,12 +251,12 @@ const MiniPlayer = () => {
       
       <MiniSeekbar seeker={seeker}/>
       
-      <div className='flex items-center gap-[2rem] text-2xl'>
-        <p className='text-[1.04rem] ml-auto cursor-pointer'>{isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>unlike(e, song.id, setLikeTrigger)}/> : <FaRegHeart className='opacity-65' onClick={(e:any)=>like(e, song.id, setLikeTrigger)}/>}</p>
-        <CgPlayListAdd className='cursor-pointer' onClick={addToPlaylist}/>
+      <div className='flex items-center gap-[3rem]'>
+        <p className='text-[1.2rem] ml-auto cursor-pointer'>{isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>unlike(e, song.id, setLikeTrigger)}/> : <FaRegHeart className='opacity-65' onClick={(e:any)=>like(e, song.id, setLikeTrigger)}/>}</p>
+        <CgPlayListAdd className='cursor-pointer text-2xl' onClick={addToPlaylist}/>
       </div>
 
-      <p className='text-2xl cursor-pointer rotate-180 transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'max'}))}><MdKeyboardArrowDown/></p>
+      <p className='text-3xl cursor-pointer rotate-180 transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'max'}))}><MdKeyboardArrowDown/></p>
     
     </div>
   )

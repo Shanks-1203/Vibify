@@ -148,7 +148,7 @@ const ProfilePage = () => {
     <div className='h-[92vh] w-full p-[2rem] relative'>
       <div className='flex items-center gap-[2rem]'>
         <div
-          className='w-[10rem] bg-[#E76716] grid place-items-center h-[10rem] rounded-full overflow-hidden cursor-pointer'
+          className='w-[14rem] h-[14rem] bg-[#E76716] grid place-items-center rounded-full overflow-hidden cursor-pointer'
           onClick={() => {
             setEditMode(true)
           }}
@@ -163,7 +163,7 @@ const ProfilePage = () => {
             <SlEarphones className='text-white text-3xl' />
           )}
         </div>
-        <p className='font-semibold text-xl grid place-items-center text-white'>
+        <p className='font-semibold text-2xl grid place-items-center text-white'>
           {userProfileName}
         </p>
         <input
@@ -177,8 +177,8 @@ const ProfilePage = () => {
 
       {editMode && (
         <div className='w-full h-screen absolute top-0 left-0 grid place-items-center bg-opacity-80 backdrop-blur'>
-          <div className='w-[22rem] h-[26rem] rotate-[5deg] p-[1rem] bg-white rounded-sm flex flex-col items-center justify-between'>
-            <div className='w-full h-[20rem] relative rounded-sm bg-black grid place-items-center cursor-pointer' onClick={handleProfileClick}>
+          <div className='w-[26rem] h-[30rem] rotate-[5deg] p-[1rem] bg-white rounded-sm flex flex-col items-center justify-between'>
+            <div className='w-full relative rounded-sm bg-black grid place-items-center cursor-pointer' onClick={handleProfileClick}>
               {newProfile ? (
                 <img src={newProfile} alt='New Profile' className='w-full h-full' />
               ) : profilePic ? (
@@ -192,14 +192,14 @@ const ProfilePage = () => {
             </div>
             <div className='w-full flex justify-evenly'>
               <div
-                className='py-3 text-center cursor-pointer text-[#E76716] rounded-md text-xs border-[#E76716] border-2 w-[5rem]'
+                className='py-3 text-center cursor-pointer text-[#E76716] rounded-md text-sm border-[#E76716] border-2 w-[6rem]'
                 onClick={handleClose}
               >
                 Close
               </div>
               {newProfile && (
                 <div
-                  className='py-3 text-center cursor-pointer text-white rounded-md text-xs bg-[#E76716] w-[5rem]'
+                  className='py-3 text-center cursor-pointer text-white rounded-md text-sm bg-[#E76716] w-[6rem]'
                   onClick={handleSave}
                 >
                   Save

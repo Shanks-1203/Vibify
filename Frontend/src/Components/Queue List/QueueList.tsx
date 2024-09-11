@@ -48,24 +48,24 @@ const QueueSongsTemplate = ({playFromQueue, highestPlayIndex, song, index}:{play
 
   return (
       <>
-        <div key={index} className={`w-full h-[3.7rem] rounded-sm hover:bg-[#80808040] cursor-pointer flex gap-[1.2rem] items-center px-[1.5rem] ${index===playIndex && 'bg-[#80808040]'}`} onClick={()=>playFromQueue(index)}>
+        <div key={index} className={`w-full py-3 rounded-sm hover:bg-[#80808040] cursor-pointer flex gap-[1.2rem] items-center px-[1.5rem] ${index===playIndex && 'bg-[#80808040]'}`} onClick={()=>playFromQueue(index)}>
                   
-            <div className='w-[2.5rem] h-[2.5rem] rounded-lg text-3xl grid place-items-center'>
+            <div className='w-[3.5rem] h-[3.5rem] rounded-lg text-4xl grid place-items-center'>
               {coverUrl ? <img src={coverUrl} alt="Cover" /> :<PiVinylRecord/>}
             </div>
                     
             <div>
-                <p className='text-xs font-semibold'>{song.songName}</p>
-                <p className='text-xs opacity-65'>{song.artistName}</p>
+                <p className='font-semibold'>{song.songName}</p>
+                <p className='text-sm opacity-65 mt-1'>{song.artistName}</p>
             </div>
-            <p className='text-xs ml-auto'>{durationCalculator(song.duration)}</p>
-            <p className='text-xl'><IoReorderTwoOutline/></p>
+            <p className='text-sm ml-auto'>{durationCalculator(song.duration)}</p>
+            <p className='text-3xl ml-4'><IoReorderTwoOutline/></p>
         </div>
 
         {(index===highestPlayIndex && index<Queue.length-1) &&
           <div className='mt-[1rem]'>
             <hr className='w-full bg-white mb-[1rem]'/>
-            <p className='text-sm opacity-65 mb-[0.5rem]'>Playing Next</p>
+            <p className='opacity-65 mb-[0.5rem]'>Playing Next</p>
           </div>
         }
       </>

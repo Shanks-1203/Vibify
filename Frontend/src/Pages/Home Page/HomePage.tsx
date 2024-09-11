@@ -24,7 +24,7 @@ const HomePage = () => {
         !(loading.songsLoaded && loading.artistsLoaded) && 
         <Loader text='Customizing your home...'/>
       }
-      <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'} ${!(loading.songsLoaded && loading.artistsLoaded) && 'hidden'} p-[2rem]`}>
+      <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'} ${!(loading.songsLoaded && loading.artistsLoaded) && 'hidden'} min-h-[92vh] p-[2rem]`}>
         <CommonHeader/>
         <div className='grid gap-[2rem] grid-cols-3 mt-[2rem]'>
           <div className='col-span-2'>

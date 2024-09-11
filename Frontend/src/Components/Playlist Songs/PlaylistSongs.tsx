@@ -40,25 +40,25 @@ const PlaylistSongs = ({playlistDetails, setLikeTrigger, playlistPlay, removeFro
   }
   
   return (
-    <div key={item.songId} className={`hover:bg-[#80808040] w-full px-[1.5rem] flex items-center justify-between h-[4rem] rounded-md text-white cursor-pointer ${song.id === item.songId && 'bg-[#80808040]'}`} onClick={()=>playlistPlay(index)}>
+    <div key={item.songId} className={`hover:bg-[#80808040] w-full px-[1.5rem] flex items-center justify-between py-3 rounded-md text-white cursor-pointer ${song.id === item.songId && 'bg-[#80808040]'}`} onClick={()=>playlistPlay(index)}>
         <div className='flex gap-[1.5rem] items-center w-[50%]'>
-            <p className='w-[3rem] h-[3rem] text-[2rem] grid place-items-center rounded-lg overflow-hidden'>
+            <p className='w-[3.5rem] h-[3.5rem] text-[2rem] grid place-items-center rounded-lg overflow-hidden'>
                 {songCover ? <img src={songCover} alt="cover" /> :<PiVinylRecord/>}
             </p>
-            <p className='w-[35%]'>{item.songName}</p>
-            <p className='opacity-65'>{item.artistName}</p>
+            <p className='w-[40%] text-base font-medium'>{item.songName}</p>
+            <p className='opacity-65 text-sm'>{item.artistName}</p>
         </div>
-        <div className='flex items-center'>
-            <p className='text-[1.04rem] ml-auto'>{item.isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>handleUnlike(e, item.songId)}/> : <FaRegHeart className='opacity-65' onClick={(e:any)=>handleLike(e, item.songId)}/>}</p>
-            <p className='mx-[3rem]'>{durationCalculator(item.duration)}</p>
+        <div className='flex items-center ml-auto w-[15%] justify-between'>
+            <p className='text-[1.4rem]'>{item.isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>handleUnlike(e, item.songId)}/> : <FaRegHeart className='opacity-65' onClick={(e:any)=>handleLike(e, item.songId)}/>}</p>
+            <p>{durationCalculator(item.duration)}</p>
             <div className='relative'>
-            <p className='p-[0.6rem] rounded-full hover:bg-[#80808040]' onClick={(event)=>toggleDropdown(index, event)}><IoMdMore className='text-xl'/></p>
+            <p className='p-[0.6rem] rounded-full hover:bg-[#80808040]' onClick={(event)=>toggleDropdown(index, event)}><IoMdMore className='text-[1.7rem]'/></p>
             { dropdown===index &&
-                <div className='w-[11rem] rounded-lg absolute left-[-11rem] top-0 bg-black overflow-hidden'>
+                <div className='w-[13rem] rounded-lg absolute left-[-13rem] top-0 bg-black overflow-hidden border-2 border-[#80808080]'>
                 {
                     songsDropDown.map((dropdownItem, keyIndex)=>{
                     return (
-                        <div key={keyIndex} className='flex w-full h-[3rem] gap-[1rem] items-center px-[1rem] hover:bg-[#80808040]' 
+                        <div key={keyIndex} className='flex w-full h-[4rem] gap-[1rem] items-center px-[1rem] hover:bg-[#80808040]' 
                         onClick={(event) =>
                         {
                         if(dropdownItem.function === 'atq'){
@@ -69,8 +69,8 @@ const PlaylistSongs = ({playlistDetails, setLikeTrigger, playlistPlay, removeFro
                             removeFromPlaylist(item.songId, playlistDetails?.playlistId, event);
                         }
                         }}>
-                        <dropdownItem.icon className='text-xl'/>
-                        <p className='text-xs'>{dropdownItem.name}</p>
+                        <dropdownItem.icon className='text-2xl'/>
+                        <p className='text-sm'>{dropdownItem.name}</p>
                         </div>
                     )
                 })

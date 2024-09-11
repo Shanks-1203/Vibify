@@ -160,16 +160,16 @@ const PlaylistPage = () => {
 
         {
           songs &&
-          <div className={`w-full p-[2rem] text-white ${songs.length < 2 && 'h-screen'}`}>
+          <div className='w-full p-[2rem] text-white min-h-[92vh]'>
 
             <CommonHeader/>
-            <p className='font-semibold text-xl mt-[2rem]'>{playlistDetails?.playlistName}</p>
-            <p className='mt-[0.5rem] opacity-65 text-xs'>Created by <span className='hover:underline cursor-pointer'>{playlistDetails?.creatorName}</span></p>
+            <p className='font-semibold text-2xl mt-[2rem]'>{playlistDetails?.playlistName}</p>
+            <p className='mt-[0.5rem] opacity-65 text-sm'>Created by <span className='hover:underline cursor-pointer'>{playlistDetails?.creatorName}</span></p>
 
             <PlaylistOptions likes={playlistDetails?.likes} isLiked={playlistDetails?.isLiked} playlistPlay={playlistPlay} likePlaylist={likePlaylist}/>
 
             { songs[0]?.songName && 
-              <div className='flex flex-col gap-[1rem] mt-[2rem] text-[0.8rem]'>
+              <div className='flex flex-col gap-[1.2rem] mt-[2rem]'>
               {
                 songs.map((item:SimpleSongType,index)=>{
                   return (
@@ -177,7 +177,7 @@ const PlaylistPage = () => {
                 )})
               }
             </div>}
-            <p className='mt-[3rem] text-center text-xs opacity-65'>{songs[0]?.songName ? "You've Reached the end of the list." : 'The Playlist is empty'}</p>
+            <p className='mt-[3rem] text-center text-sm opacity-65'>{songs[0]?.songName ? "You've Reached the end of the list." : 'The Playlist is empty'}</p>
 
               <RelatedPlaylists/>
 

@@ -21,10 +21,10 @@ const ArtistRanking = () => {
     },
     {
       rank: 3,
-      name: '*NSYNC',
+      name: 'Alan Walker',
       views: '14M',
       status: '+',
-      places: 22,
+      places: 3,
     },
     {
       rank: 4,
@@ -44,8 +44,8 @@ const ArtistRanking = () => {
 
   return (
     <div className='pt-4 h-[50vh]'>
-      <p className='text-sm opacity-65'>Top Artists</p>
-      <div className='flex flex-col gap-2 mt-4'>
+      <p className='opacity-65'>Top Artists</p>
+      <div className='flex flex-col gap-4 mt-4'>
         {rank.map((item) => {
           return <ArtistRankCard ranking={item} />
         })}
@@ -65,19 +65,18 @@ const ArtistRankCard = ({
     places: number
   }
 }) => {
-    return (
-        <div className='w-full rounded-lg text-xs flex gap-4 p-2 items-center hover:bg-[#80808040] cursor-pointer'>
-            <p className='text-lg font-bold'>{ranking.rank}</p>
-            <div className='w-[2.5rem] h-[2.5rem] rounded-lg bg-white grid place-items-center text-black'><FaUser /></div>
-            <p>{ranking.name}</p>
-            <div className='ml-auto flex gap-2 items-center'>
-                <p className='mr-4 opacity-65'>{ranking.views}+ views</p>
-                <p className='text-lg'>{ranking.status === '+' ? <FaArrowTrendUp className='text-green-400'/> : <FaArrowTrendDown className='text-red-500'/>}</p>
-                <p className='w-[1.5rem] text-right text-md'>{ranking.status}{ranking.places}</p>
-            </div>
-        </div>
-    )
-    
+  return (
+      <div className='w-full rounded-lg flex gap-4 px-2 py-3 items-center hover:bg-[#80808040] cursor-pointer'>
+          <p className='text-xl font-bold'>{ranking.rank}</p>
+          <div className='w-[3rem] h-[3rem] rounded-lg bg-white grid place-items-center text-black'><FaUser /></div>
+          <p>{ranking.name}</p>
+          <div className='ml-auto flex gap-2 items-center'>
+              <p className='mr-4 opacity-65'>{ranking.views}+ views</p>
+              <p className='text-xl'>{ranking.status === '+' ? <FaArrowTrendUp className='text-green-400'/> : <FaArrowTrendDown className='text-red-500'/>}</p>
+              <p className='w-[1.5rem] text-right'>{ranking.status}{ranking.places}</p>
+          </div>
+      </div>
+  )
 }
 
 export default ArtistRanking

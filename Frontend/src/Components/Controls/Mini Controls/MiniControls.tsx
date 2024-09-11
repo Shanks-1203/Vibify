@@ -41,12 +41,12 @@ const MiniControls = ({prevButton, nextButton} : {prevButton:Function, nextButto
     }
 
   return (
-    <div className='flex gap-[2rem] items-center justify-evenly'>
-        <p className={`text-[1.4rem] cursor-pointer relative ${!shuffle ? 'opacity-50' : 'text-[#E76716]'}`} onClick={toggleShuffleFunction}><IoShuffle/>{shuffle && <BsDot className="absolute bottom-[-1rem]"/>}</p>
-        <p className={`text-2xl cursor-pointer ${(playIndex === 0 && repeat==='off') && 'opacity-50'}`} onClick={()=>prevButton()}><MdSkipPrevious/></p>
-        <p className='text-white border-[1px] rounded-full p-[0.7rem] text-sm cursor-pointer' onClick={()=>toggle()}>{!play ? <FaPlay/> : <FaPause/>}</p>
-        <p className={`text-2xl cursor-pointer ${(playIndex === (Queue.length - 1) && repeat==='off') && 'opacity-50'}`} onClick={()=> {nextButton()}}><MdSkipNext/></p>
-        <p className={`text-xl cursor-pointer relative ${repeat==='off' ? 'opacity-50' : 'text-[#E76716]'} `} onClick={setRepeatFunction}>{repeat==='off' ? <TbRepeatOff/> : repeat==='on' ? <TbRepeat/> : <TbRepeatOnce/> }{(repeat==='on' || repeat==='once') && <BsDot className="absolute bottom-[-1rem]"/>}</p>
+    <div className='flex gap-[3rem] items-center justify-evenly'>
+        <p className={`text-3xl cursor-pointer relative ${!shuffle ? 'opacity-50' : 'text-[#E76716]'}`} onClick={toggleShuffleFunction}><IoShuffle/>{shuffle && <BsDot className="absolute bottom-[-1rem]"/>}</p>
+        <p className={`text-3xl cursor-pointer ${(playIndex === 0 && repeat==='off') && 'opacity-50'}`} onClick={()=>prevButton()}><MdSkipPrevious/></p>
+        <p className='text-white border-[1px] rounded-full p-[0.9rem] text-md cursor-pointer' onClick={()=>toggle()}>{!play ? <FaPlay/> : <FaPause/>}</p>
+        <p className={`text-3xl cursor-pointer ${(playIndex === (Queue.length - 1) && repeat==='off') && 'opacity-50'}`} onClick={()=> {nextButton()}}><MdSkipNext/></p>
+        <p className={`text-2xl cursor-pointer relative ${repeat==='off' ? 'opacity-50' : 'text-[#E76716]'} `} onClick={setRepeatFunction}>{repeat==='off' ? <TbRepeatOff/> : repeat==='on' ? <TbRepeat/> : <TbRepeatOnce/> }{(repeat==='on' || repeat==='once') && <BsDot className="absolute bottom-[-1rem]"/>}</p>
     </div>
   )
 }

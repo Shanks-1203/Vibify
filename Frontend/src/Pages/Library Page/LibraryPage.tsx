@@ -67,31 +67,31 @@ const LibraryPage = () => {
     {
         loading ?
         <Loader text="Your legendary collection is on it's way.."/> :
-        <div className='w-full min-h-[94vh] relative text-white p-[2rem]'>
+        <div className='w-full min-h-[92vh] relative text-white p-[2rem]'>
             <CommonHeader/>
-            <p className='text-sm opacity-65 mt-[2rem]'>Your Playlists</p>
+            <p className='opacity-65 mt-[2rem]'>Your Playlists</p>
 
-            <div className='flex gap-[3rem]'>
+            <div className='flex gap-[3rem] mt-4'>
 
                 <Link to={isLoggedIn ? `/favorites` : '/library'}>
-                    <div className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
-                        <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
-                            <FaHeart className='text-3xl text-red-500'/>
+                    <div className='mt-[1rem] w-[10rem] flex text-center flex-col items-center cursor-pointer'>
+                        <div className='w-full grid place-items-center h-[10rem] bg-white text-black rounded-lg'>
+                            <FaHeart className='text-4xl text-red-500'/>
                         </div>
-                        <p className='mt-[0.8rem]'>Favorites</p>
-                        <p className='mt-1 opacity-65'>{favoritesCount} Tracks</p>
+                        <p className='mt-4'>Favorites</p>
+                        <p className='mt-1 opacity-65 text-sm'>{favoritesCount} Tracks</p>
                     </div>
                 </Link>
 
                 {(ownPlaylists ? ownPlaylists : dummyPlaylist).map((item,index)=>{
                     return (
                         <Link key={index} to={ownPlaylists ? `/playlists/${item.playlistId}` : '/library'}>
-                            <div className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
-                                <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
-                                    <PiPlaylist className='text-3xl'/>
+                            <div className='mt-[1rem] w-[10rem] text-center flex flex-col items-center cursor-pointer'>
+                                <div className='w-full grid place-items-center h-[10rem] bg-white text-black rounded-lg'>
+                                    <PiPlaylist className='text-4xl'/>
                                 </div>
-                                <p className='mt-[0.8rem]'>{item.playlistName}</p>
-                                <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
+                                <p className='mt-4'>{item.playlistName}</p>
+                                <p className='mt-1 opacity-65 text-sm'>{item.trackCount} Tracks</p>
                             </div>
                         </Link>
                     )
@@ -99,18 +99,18 @@ const LibraryPage = () => {
             </div>
 
             
-            {!(likedPlaylists?.length === 0) && <p className='text-sm opacity-65 mt-[2rem]'>Liked Playlists</p>}
-            <div className='flex gap-[3rem]'>
+            {!(likedPlaylists?.length === 0) && <p className='opacity-65 mt-[2rem]'>Liked Playlists</p>}
+            <div className='flex gap-[3rem] mt-4'>
                 {(likedPlaylists ? likedPlaylists : dummyPlaylist).map((item,index)=>{
                     return (
                         <>
                             <Link key={index} to={likedPlaylists ? `/playlists/${item.playlistId}` : '/library'}>                
-                                <div key={index} className='mt-[1rem] w-[8rem] text-xs flex flex-col items-center cursor-pointer'>
-                                    <div className='w-full grid place-items-center h-[8rem] bg-white text-black rounded-lg'>
+                                <div key={index} className='mt-[1rem] w-[10rem] text-center flex flex-col items-center cursor-pointer'>
+                                    <div className='w-full grid place-items-center h-[10rem] bg-white text-black rounded-lg'>
                                         <PiPlaylist className='text-3xl'/>
                                     </div>
                                     <p className='mt-[0.8rem]'>{item.playlistName}</p>
-                                    <p className='mt-1 opacity-65'>{item.trackCount} Tracks</p>
+                                    <p className='mt-1 opacity-65 text-sm'>{item.trackCount} Tracks</p>
                                 </div>
                             </Link>
                         </>

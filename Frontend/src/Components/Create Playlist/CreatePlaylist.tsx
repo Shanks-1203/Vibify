@@ -32,17 +32,17 @@ const CreatePlaylist = () => {
     <div className={`w-full transition-all h-screen grid place-items-center fixed ${createPopup ? 'scale-100' : 'scale-0'}`} >
 
       <div className='w-[25%] rounded-md bg-black text-white overflow-hidden'>
-        <div className='w-full h-[14rem] p-[1rem] flex flex-col justify-between bg-[#80808050]'>
-          <p className='text-sm opacity-65'>Create Playlist</p>
+        <div className='w-full p-[1.5rem] flex flex-col bg-[#80808050]'>
+          <p className='opacity-65'>Create Playlist</p>
           
-          <div>
-            <p className='text-sm'>Playlist Name</p>
-            <input value={name} type="text" className='mt-2 w-full bg-transparent border-2 rounded-md p-2 border-[#80808070] outline-none text-sm' placeholder='Vibify Playlist' onChange={(e)=>handleChange(e)}/>
+          <div className='mt-4'>
+            <p>Playlist Name</p>
+            <input value={name} type="text" className='mt-2 w-full bg-transparent border-2 rounded-md p-2 border-[#80808070] outline-none' placeholder='Vibify Playlist' onChange={(e)=>handleChange(e)}/>
           </div>
 
-          <div className='flex justify-end gap-[1rem] items-center'>
-            <p className='py-3 w-[5rem] text-center rounded-md cursor-pointer text-xs bg-[#80808030]' onClick={()=>dispatch(toggleCreatePopup())}>Cancel</p>
-            <p className={`py-3 w-[5rem] text-center rounded-md cursor-pointer text-xs bg-[#E76716] ${name ? 'bg-[#E76716]' : 'bg-[#808080] opacity-65'}`} onClick={handleSubmit}>Create</p>
+          <div className='flex justify-end gap-[1rem] items-center mt-6'>
+            <p className='py-3 w-[6rem] text-center rounded-md cursor-pointer bg-[#80808030]' onClick={()=>dispatch(toggleCreatePopup())}>Cancel</p>
+            <p className={`py-3 w-[6rem] text-center rounded-md cursor-pointer ${name ? 'bg-[#E76716]' : 'bg-[#808080] opacity-65'}`} onClick={handleSubmit}>Create</p>
           </div>
         </div>
       </div>

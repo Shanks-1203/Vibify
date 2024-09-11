@@ -103,11 +103,11 @@ const FullScreenMusic = () => {
     <div className={`${miniplayer==='max' ? 'w-[85%] h-screen p-[3rem] right-0' : 'w-0 h-0'} overflow-hidden flex fixed bottom-0 transition-all text-white z-10 bg-black`}>
       <div className='w-[60%] h-full flex flex-col justify-center relative items-center'>
       <div className='flex items-center absolute top-3 right-7'>
-            <p className='text-2xl cursor-pointer transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'on'}))}><MdKeyboardArrowDown/></p>
+            <p className='text-3xl cursor-pointer transition-all' onClick={()=>dispatch(setMiniplayer({miniplayer:'on'}))}><MdKeyboardArrowDown/></p>
         </div>
-        <div className='w-[15rem] h-[15rem] bg-white text-black grid place-items-center text-[6rem]'>{song.urls.cover ? <img src={song.urls.cover} alt="Cover" className='w-full h-full'/> :<PiVinylRecord/>}</div>
-        <p className='font-semibold mt-[2rem] text-xl'>{song.name}</p>
-        <p className='text-sm mt-2 opacity-65'>{song.artist}</p>
+        <div className='w-[20rem] h-[20rem] bg-white text-black grid place-items-center text-[6rem]'>{song.urls.cover ? <img src={song.urls.cover} alt="Cover" className='w-full h-full'/> :<PiVinylRecord/>}</div>
+        <p className='font-semibold mt-[2rem] text-2xl'>{song.name}</p>
+        <p className='text-base mt-2 opacity-65'>{song.artist}</p>
         
         <SeekBar seeker={seeker}/>
 
@@ -116,7 +116,7 @@ const FullScreenMusic = () => {
       </div>
 
       <div className='w-[40%] text-white rounded-md h-full'>
-        <div className='flex gap-[1rem] text-sm h-[7%]'>
+        <div className='flex gap-[1.2rem] text-base h-[7%]'>
             <p className={`p-[0.6rem] cursor-pointer ${tab === 'queue' && 'border-t-2 border-[#E76716] text-[#E76716] font-semibold bg-gradient-to-b from-[#E7671660] to-black px-3'}`} onClick={()=>setTab('queue')}>Queue</p>
             <p className={`p-[0.6rem] cursor-pointer ${tab === 'lyrics' && 'border-t-2 border-[#E76716] text-[#E76716] font-semibold bg-gradient-to-b from-[#E7671660] to-black px-3'}`} onClick={()=>setTab('lyrics')}>Lyrics</p>
             <p className={`p-[0.6rem] cursor-pointer ${tab === 'artists' && 'border-t-2 border-[#E76716] text-[#E76716] font-semibold bg-gradient-to-b from-[#E7671660] to-black px-3'}`} onClick={()=>setTab('artists')}>Artist</p>

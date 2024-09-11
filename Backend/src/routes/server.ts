@@ -374,32 +374,40 @@ app.post('/removeFromPlaylist', async(req,res)=>{
 })
 
 
-//Get playlists in home page
-app.get('/home-playlists', async(req,res)=> {
-
-  const userId = req.headers['userId'] as string;
-
-  try{
+//Get Trending playlists in home page
+app.get('/trending-playlists', async(req, res) => {
+  try {
     let list = [];
-    const playlists = await firestore.collection('playlists').get()
+    const playlists = await firestore.collection('playlists').get();
 
     list = await Promise.all(
-      playlists.docs.map(async(doc)=>{
+      playlists.docs.map(async (doc) => {
         const detail = doc.data();
 
-        const trackCount = (await firestore.collection('playlist-songs').where('playlist_id','==', doc.id).get()).size
+        const trackCount = (await firestore.collection('playlist-songs')
+          .where('playlist_id', '==', doc.id).get()).size;
 
-        return {playlistId : doc.id, playlistName: detail.playlist_name, trackCount}
+        const likes = (await firestore.collection('library-playlists')
+          .where('playlist_id', '==', doc.id).get()).size;
+
+        return {
+          playlistId: doc.id,
+          playlistName: detail.playlist_name,
+          trackCount,
+          likes,
+        };
       })
-    )
+    );
 
-    res.status(200).send(list);
-  } catch(err) {
-    console.log(err)
-    res.status(500).send('Internal server error')
+    list.sort((a, b) => b.likes - a.likes);
+    const topThreePlaylists = list.slice(0, 3);
+    res.status(200).send(topThreePlaylists);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send('Internal server error');
   }
+});
 
-})
 
 app.get('/library-playlists', async(req,res)=>{
   const userId = req.headers['userId'] as string;

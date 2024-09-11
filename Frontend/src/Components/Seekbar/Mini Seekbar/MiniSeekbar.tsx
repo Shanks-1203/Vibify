@@ -14,11 +14,11 @@ const MiniSeekbar = ({seeker}:{seeker:Function}) => {
   }
 
   return (
-    <div className='flex px-[1.5rem] text-xs gap-[1rem] justify-center items-center relative'>
+    <div className='flex px-[1.5rem] text-sm gap-[1rem] justify-center items-center relative'>
         <p className='absolute left-[-5%]'>{durationCalculator(Math.floor(duration))}</p>
-        <div className='w-[25rem] miniseek h-[0.2rem] bg-white cursor-pointer' onClick={(e)=>seeker(e)} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>
+        <div className='w-[29rem] miniseek h-[0.2rem] bg-white cursor-pointer' onClick={(e)=>seeker(e)} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>
             <div className='h-full bg-[#E76716] flex justify-end items-center' style={{width: seek+'%'}}>
-                <div className='w-[0.5rem] h-[0.5rem] rounded-full bg-[#E76716]' style={{opacity: hover ? '100%' : '0%'}}></div>
+                <div className='w-[0.5rem] h-[0.5rem] transition-all rounded-full bg-[#E76716]' style={{opacity: hover ? '100%' : '0%'}}></div>
             </div>
         </div>
         <p className='absolute right-[-5%]'>{durationCalculator(songLength)}</p>

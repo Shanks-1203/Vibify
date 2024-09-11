@@ -33,12 +33,12 @@ const PopularArtists = ({setLoading}:{setLoading:Function}) => {
 
   return (
     <div className='w-full mt-[2rem]'>
-        <div className='text-sm text-white flex justify-between items-center'>
+        <div className='text-md text-white flex justify-between items-center'>
             <p className='opacity-65'>Popular Artists</p>
-            <span className='text-xs font-normal text-[#E76716] cursor-pointer hover:underline'>View more</span>
+            <span className='text-sm font-normal text-[#E76716] cursor-pointer hover:underline'>View more</span>
         </div>
         <div className='w-[100%] overflow-x-scroll scroll'>
-            <div className='w-fit flex gap-[3.5rem] mt-[1rem]'>
+            <div className='w-fit flex gap-[3.5rem] mt-[1.2rem]'>
                 {
                     artists.map((item:artistType,index)=>{
                         return <ArtistTemplate item={item} key={index}/>
@@ -55,9 +55,9 @@ const ArtistTemplate: React.FC<{item:artistType}> = ({item}) => {
 
     return(
         <Link to={`/artists/${item.artistId}`}><div className='flex text-white flex-col text-center'>
-            <div className='w-[8.5rem] h-[8.5rem] rounded-lg bg-white cursor-pointer text-black text-[3rem] grid place-items-center overflow-hidden'>{profileURL ? <img src={profileURL} alt="artist-profile" className='w-full h-full' /> : <FaUser />}</div>
-            <p className='mt-3 text-[0.8rem]'>{item.artistName}</p>
-            <p className='mt-1 text-xs opacity-65'>{item.followers} Followers</p>
+            <div className='w-[12rem] h-[12rem] rounded-lg bg-white cursor-pointer text-black text-[3rem] grid place-items-center overflow-hidden'>{profileURL ? <img src={profileURL} alt="artist-profile" className='w-full h-full' /> : <FaUser />}</div>
+            <p className='mt-3'>{item.artistName}</p>
+            <p className='mt-1 text-sm opacity-65'>{item.followers} Followers</p>
         </div></Link>
     )
 }

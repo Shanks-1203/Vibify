@@ -64,19 +64,19 @@ const QuickAccessPopup = () => {
       }`}
     >
       <div className='bg-black w-[30%] rounded-md'>
-        <div className='bg-[#80808050] text-white h-full p-[1rem] rounded-md'>
-          <p className='text-sm opacity-65'>Pin to Quick Access</p>
+        <div className='bg-[#80808050] text-white h-full p-[1.5rem] rounded-md'>
+          <p className='opacity-65'>Pin to Quick Access</p>
           <div className='w-full flex flex-wrap justify-between gap-2 mt-[1.3rem]'>
             {
                     playlists.map((item:playlistType, index:number)=>{
                         return(
                             <div key={index} className={`px-4 rounded-md w-full py-2 flex items-center gap-4 cursor-pointer hover:bg-[#80808030] ${pins.some((pin)=>pin.playlistId === item.playlistId) && 'opacity-40'}`} onClick={()=>setSelectedPlaylist(item.playlistId)}>
-                                <div className={`w-[0.8rem] h-[0.8rem] rounded-full grid place-items-center ${selectedPlaylist === item.playlistId ? 'bg-[#E76716] border-2' : 'bg-white'}`}/>
-                                <div className='w-[3rem] h-[3rem] text-xl rounded-lg text-black bg-white grid place-items-center'>
+                                <div className={`w-[0.9rem] h-[0.9rem] rounded-full grid place-items-center ${selectedPlaylist === item.playlistId ? 'bg-[#E76716] border-2' : 'bg-white'}`}/>
+                                <div className='w-[3.5rem] h-[3.5rem] text-2xl rounded-lg text-black bg-white grid place-items-center'>
                                     <BiSolidPlaylist/>
                                 </div>
-                                <p className='text-xs font-semibold text-center'>{item.playlistName}</p>
-                                <p className='text-xs text-center opacity-65 ml-auto'>{item.trackCount} Tracks</p>
+                                <p className='font-semibold text-center'>{item.playlistName}</p>
+                                <p className='text-sm text-center opacity-65 ml-auto'>{item.trackCount} Tracks</p>
                             </div>
                         )
                     })

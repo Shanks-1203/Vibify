@@ -34,8 +34,8 @@ const FeaturedPlaylists = () => {
   
   return (
     <div>
-      <p className='text-white text-sm opacity-65'>Your Playlists</p>
-      <div className='w-full flex flex-wrap justify-between mt-[1rem]'>
+      <p className='text-white text-md opacity-65'>Your Playlists</p>
+      <div className='w-full flex flex-wrap justify-between mt-[1.2rem]'>
         {
           playlistList.map((item, index)=>{
             return(
@@ -52,15 +52,15 @@ const PlaylistTemplate : React.FC<{details: playlistType}> = ({details}) => {
 
   return(
     <Link to={`/playlists/${details.playlistId}`} key={details.playlistId} className='w-[48%] mb-4'>
-      <div className='relative w-full gap-[1.5rem] text-white rounded-lg bg-[#80808050] items-center flex cursor-pointer p-4'>
-        <div className='w-[3rem] rounded-lg h-[3rem] bg-white text-black grid place-items-center text-2xl'>
+      <div className='relative w-full gap-[1.5rem] text-white rounded-lg bg-[#80808050] items-center flex cursor-pointer p-5'>
+        <div className='w-[3.3rem] rounded-lg h-[3.3rem] bg-white text-black grid place-items-center text-2xl'>
           <BiSolidPlaylist/>
         </div>
         <div className='w-[60%] flex justify-center flex-col'>
-          <p className='font-medium text-sm h-fit'>{details.playlistName}</p>
-          <p className='opacity-65 mt-2 text-xs'>{details.trackCount} Tracks</p>
+          <p className='font-medium h-fit'>{details.playlistName}</p>
+          <p className='opacity-65 mt-1 text-sm'>{details.trackCount} Tracks</p>
         </div>
-        <div className='p-[0.4rem] rounded-full hover:bg-[#80808099] transition-all absolute right-2'><IoMdMore className='text-2xl'/></div>
+        <div className='p-[0.4rem] rounded-full hover:bg-[#80808099] transition-all absolute right-2'><IoMdMore className='text-3xl'/></div>
       </div>
     </Link>
   )

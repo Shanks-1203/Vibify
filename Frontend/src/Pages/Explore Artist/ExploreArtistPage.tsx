@@ -17,13 +17,17 @@ const ExploreArtistPage = () => {
 
     const fetchData = async() => {
         setLoading(true)
-        const resp = await httpClient.get('/artists/following',{
-            headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
-        })
-
-        setFollowing(resp.data);
-
-        await songsFetch()
+        try{
+            const resp = await httpClient.get('/artists/following',{
+                headers:  token ? { 'Authorization': `Bearer ${token}` } : {}
+            })
+    
+            setFollowing(resp.data);
+    
+            await songsFetch()
+        } catch(err){
+            console.log(err)
+        }
         setLoading(false)
     }
 
@@ -49,11 +53,11 @@ const ExploreArtistPage = () => {
     <>
         {
             loading ? <Loader text='Dive into the world of music...' /> :
-            <div className='w-full min-h-[94vh] p-[2rem]'>
+            <div className='w-full min-h-[92vh] p-[2rem]'>
                 <CommonHeader/>
                 <div className='grid grid-cols-3 gap-4 grid-flow-row mt-[2rem] text-white'>
                     <div className='h-full col-span-2'>
-                        <LatestReleases songs={songs} likeTrigger={likeTrigger} setLikeTrigger={setLikeTrigger}/>
+                        <LatestReleases songs={songs} setLikeTrigger={setLikeTrigger}/>
                     </div>
                     <div className='h-full'>
                         {following.length > 0 && <FollowingArtists following={following}/>}

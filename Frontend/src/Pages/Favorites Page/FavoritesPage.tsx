@@ -83,11 +83,11 @@ const FavoritesPage = () => {
           <Loader text='Loading your great taste of music...'/> :
           <div className='w-full h-screen p-[2rem] bg-black text-white'>
               <CommonHeader/>
-              <p className='font-semibold flex justify-between items-center text-xl mt-[2rem]'>
+              <p className='font-semibold flex justify-between items-center text-2xl mt-[2rem]'>
                   Favorites
-                  <p className='w-[2.5rem] h-[2.5rem] rounded-full bg-[#E76716] text-xs ml-auto cursor-pointer grid place-items-center text-black' onClick={()=>playlistPlay()}><FaPlay/></p>
+                  <p className='w-[3rem] h-[3rem] rounded-full bg-[#E76716] text-sm ml-auto cursor-pointer grid place-items-center text-black' onClick={()=>playlistPlay()}><FaPlay/></p>
               </p>
-              <div className='w-full flex flex-col gap-4 mt-[2rem] text-[0.8rem]'>
+              <div className='w-full flex flex-col gap-4 mt-[2rem]'>
                   {
                       favorites.map((item, index) => {
                           return(
@@ -96,7 +96,7 @@ const FavoritesPage = () => {
                       })
                   }
               </div>
-              <p className='mt-[3rem] text-center text-xs opacity-65'>{favorites.length === 0 ? "It's never too late to like a song." :"Looks like you've hit the bottom."}</p>
+              <p className='mt-[3rem] text-center text-sm opacity-65'>{favorites.length === 0 ? "It's never too late to like a song." :"Looks like you've hit the bottom."}</p>
           </div>
         }
     </>

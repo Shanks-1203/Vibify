@@ -105,10 +105,10 @@ const ArtistTemplate = ({artistDetails, token, setReloadTrigger, spinLoad}:{arti
   return(
     <div>
       <div className='flex mt-[2rem] items-center'>
-        <div className='w-[10rem] h-[10rem] rounded-full bg-white text-black text-[3rem] grid place-items-center overflow-hidden'>{artistDetails?.artistProfile ? <img src={artistDetails.artistProfile} alt="artist-profile" className='w-full h-full' /> : <FaUser />}</div>
+        <div className='w-[13rem] h-[13rem] rounded-full bg-white text-black text-[3rem] grid place-items-center overflow-hidden'>{artistDetails?.artistProfile ? <img src={artistDetails.artistProfile} alt="artist-profile" className='w-full h-full' /> : <FaUser />}</div>
         <div className='text-white ml-[2rem]'>
-          <h1 className='font-semibold text-xl grid place-items-center text-white'>{artistDetails?.artistName}</h1>
-          <p className='mt-3 opacity-75 text-sm'>{artistDetails?.followers} Followers</p>
+          <h1 className='font-semibold text-2xl grid place-items-center text-white'>{artistDetails?.artistName}</h1>
+          <p className='mt-3 opacity-75'>{artistDetails?.followers} Followers</p>
         </div>
       </div>
       <div className='mt-[2rem] w-full flex items-center gap-[3rem]'>
@@ -116,8 +116,8 @@ const ArtistTemplate = ({artistDetails, token, setReloadTrigger, spinLoad}:{arti
         {
           spinLoad ? <SpinLoader/> :
             artistDetails.isFollowing ?
-            <p className='text-red-500 text-sm cursor-pointer' onClick={unfollowArtist}>Unfollow</p>:
-            <p className='text-[#E76716] text-sm cursor-pointer' onClick={followArtist}>Follow</p>
+            <p className='text-red-500 cursor-pointer' onClick={unfollowArtist}>Unfollow</p>:
+            <p className='text-[#E76716] cursor-pointer' onClick={followArtist}>Follow</p>
         }
       </div>
     </div>
