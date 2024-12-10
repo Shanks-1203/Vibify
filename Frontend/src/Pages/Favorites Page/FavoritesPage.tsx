@@ -14,6 +14,7 @@ const FavoritesPage = () => {
 
     const [favorites, setFavorites] = useState<SimpleSongType[]>([]);
     const [loading, setLoading] = useState(true);
+    const [dropdown, setDropdown] = useState<number | null>(null);
     const dispatch = useDispatch();
 
     const fetchFavorites = async () =>{
@@ -34,8 +35,7 @@ const FavoritesPage = () => {
         fetchFavorites();
     },[])
 
-    const playSong = async (item:SimpleSongType) => {
-  
+    const playSong = async (item:SimpleSongType) => { 
         dispatch(setSongInfo({
           song: {
             id: item.songId,
@@ -63,7 +63,11 @@ const FavoritesPage = () => {
         dispatch(setPlay({play:true}));
         dispatch(setMusicSeek({seek:0}));
         dispatch(setDuration({duration:0}));
-    
+    }
+
+    const toggleDropDown = (index:number, event:any) => {
+      event.stopPropagation();
+      setDropdown(dropdown === index ? null : index);
     }
   
     const playlistPlay = ( songNumber:number = 0 ) => {
@@ -91,7 +95,7 @@ const FavoritesPage = () => {
                   {
                       favorites.map((item, index) => {
                           return(
-                            <FavoriteSongsTemplate playlistPlay={playlistPlay} item={item} key={index} index={index}/>
+                            <FavoriteSongsTemplate toggleDropDown={toggleDropDown} playSong={playSong} dropdown={dropdown} setDropdown={setDropdown} playlistPlay={playlistPlay} item={item} key={index} index={index}/>
                           )
                       })
                   }

@@ -74,17 +74,7 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
 
   const dispatch = useDispatch();
   const {Queue} = useSelector((state:QueueState)=> state.musicQueue)
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const {song, isLiked} = useSelector((state:musicPlayerState) => state.musicPlayer);
-
-  useEffect(()=>{
-    const songFetch = async() => {
-      setCoverUrl(null)
-      const url = await fetchSongCover(item.songId);
-      if(url) setCoverUrl(url);
-    }
-    songFetch()
-  },[item.songId])
 
   const playSong = async () => {
     
@@ -152,13 +142,13 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
     return (
         <div className='flex items-center gap-[2rem] cursor-pointer py-[0.5rem] w-full text-center text-white hover:bg-gradient-to-r hover:from-[#80808015] hover:via-[#80808060] hover:to-[#80808015]' onClick={playSong}>
             <div className='w-[3rem] h-[3rem] rounded-lg text-xl grid text-black place-items-center bg-white overflow-hidden'>
-                {coverUrl ? <img src={coverUrl} alt="cover" /> : <PiVinylRecord/>}
+                {item.coverUrl ? <img src={item.coverUrl} alt="cover" /> : <PiVinylRecord/>}
             </div>
             <p className='font-medium text-left w-[25%]'>{item.songName}</p>
             <p className='opacity-65 text-sm'>{item.artistName}</p>
             <p className='text-[1.4rem] ml-auto'>{item.isLiked ? <FaHeart className='text-[#E76716]' onClick={(e)=>handleUnlike(e, item.songId)}/> : <FaRegHeart className='opacity-65' onClick={(e)=>handleLike(e, item.songId)}/>}</p>
             <p className='ml-3 w-[5%]'>{durationCalculator(item.duration)}</p>
-            <div className='p-[0.5rem] relative hover:bg-[#80808040] rounded-full' onClick={(e)=>toggleDropDown(index, e)}>
+            <div className='p-[0.6rem] relative hover:bg-[#80808040] rounded-full' onClick={(e)=>toggleDropDown(index, e)}>
               <IoMdMore className='text-2xl'/>
               { dropdown===index &&
               <div className='absolute w-[12rem] left-[-12rem] border-2 border-[#80808080] top-0 rounded-lg overflow-hidden z-10 bg-black'>
@@ -171,7 +161,7 @@ const SongTemplate: React.FC<{dropdown:number|null, setDropdown:Function, toggle
                           {item.name}
                         </p>
                       )
-                    }  
+                    }
                     return null
                   })
                 }

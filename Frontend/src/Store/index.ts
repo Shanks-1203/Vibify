@@ -4,6 +4,7 @@ import musicQueueReducer from '../Slices/musicQueueSlice';
 import saveToPlaylistSlice from '../Slices/saveToPlaylistSlice';
 import profileDetailsSlice from '../Slices/profileDetailsSlice';
 import addToQuickAccessSlice from '../Slices/addToQuickAccessSlice';
+import searchSlice from '../Slices/searchSlice';
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     musicQueue: musicQueueReducer,
     saveToPlaylist: saveToPlaylistSlice,
     profileDetails: profileDetailsSlice,
-    addToQuickAccess: addToQuickAccessSlice
+    addToQuickAccess: addToQuickAccessSlice,
+    search: searchSlice
   },
 });

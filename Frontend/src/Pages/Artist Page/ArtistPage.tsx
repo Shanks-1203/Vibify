@@ -59,7 +59,7 @@ const ArtistPage =() => {
         {
           loading ?
           <Loader text='Artist is on the way...'/> :
-          <div className='w-full min-h-[94vh] p-[2rem]'>
+          <div className='w-full min-h-[92vh] p-[2rem]'>
               <div className={`${miniplayer==='max' && 'overflow-hidden h-screen'}`}>
                 {artistDetails && (
                   <div>

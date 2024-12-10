@@ -28,11 +28,11 @@ const HomeLayout = () => {
           </div>
         </div>
       </div>
+      <FullScreenMusic/>
+      <MiniPlayer/>
       <SaveToPlaylistPage/>
       <QuickAccessPopup/>
       <CreatePlaylist/>
-      <FullScreenMusic/>
-      <MiniPlayer/>
     </div>
   )
 }

@@ -1,25 +1,26 @@
 export interface Song {
-    ArtistName: String
+    ArtistName: string
     PlaylistId: number
-    PlaylistName: String
+    PlaylistName: string
     PlaylistLikes: number
-    UserName: String
+    UserName: string
     artistId: number
     duration: number
     songId: string
-    songName: String
-    lyrics: String
-    isLiked: Boolean
+    songName: string
+    lyrics: string
+    isLiked: boolean
 }
 
 export interface SimpleSongType {
+  coverUrl: string
   songId: string
   songName: string
   artistId: string
-  artistName: String
+  artistName: string
   duration: number
-  // lyrics: String
-  isLiked:Boolean
+  // lyrics: string
+  isLiked:boolean
 }
 
 export interface QueueState {
@@ -43,36 +44,43 @@ export interface musicPlayerState {
     musicPlayer: {
       song:{
         id: string,
-        name:String,
-        artist:String,
+        name:string,
+        artist:string,
         urls: {
           mp3: string
           cover:string,
           lyrics: string | null,
         }
       }
-      isLiked:Boolean
+      isLiked:boolean
       songLength: number,
-      miniplayer:String,
-      play:Boolean,
+      miniplayer:string,
+      play:boolean,
       musicSeek:number,
       duration: number,
-      shuffle:Boolean,
-      repeat:String
+      shuffle:boolean,
+      repeat:string
     };
+}
+
+export interface searchState {
+  search: {
+    keyword: string,
+    search: boolean
+  }
 }
 
 export type playlistType = {
   playlistId:string
-  playlistName:String
+  playlistName:string
   trackCount: number
 };
 
 export interface saveToPlaylist {
   saveToPlaylist: {
-    popup:Boolean,
+    popup:boolean,
     songId: number | null
-    createPopup:Boolean
+    createPopup:boolean
   }
 }
 
@@ -100,7 +108,7 @@ export interface artistDetails {
 
 export interface profileDetails {
   profileDetails: {
-    userProfileName:String | null,
+    userProfileName:string | null,
     profilePic:string | null,
     isLoggedIn: boolean
   }
@@ -108,7 +116,7 @@ export interface profileDetails {
 
 export interface artistType {
   artistId:number
-  artistName:String
+  artistName:string
   followers: number
   profileURL: string
 };

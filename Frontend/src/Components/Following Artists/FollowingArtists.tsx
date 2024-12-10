@@ -9,7 +9,7 @@ const FollowingArtists = ({following}:{following:{profilePic: string, artistId:s
 
   return (
     <div className='h-fit max-h-[50vh]'>
-      <p className='flex justify-between items-center'><span className='opacity-65'>Following</span> <LuFilter className={`text-2xl cursor-pointer ${filter ? 'text-[#E76716]' : 'opacity-65'}`} onClick={()=>setFilter((prev:Boolean)=>!prev)}/></p>
+      <p className='flex justify-between items-center'><span className='opacity-65'>Following</span> <LuFilter className={`text-2xl cursor-pointer ${filter ? 'text-[#E76716]' : 'opacity-65'}`} onClick={()=>setFilter((prev:boolean)=>!prev)}/></p>
       <div className='flex flex-col gap-4 mt-4 overflow-y-scroll h-[88%]'>
         {
             following.map((item, index) => {

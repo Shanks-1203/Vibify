@@ -263,7 +263,26 @@ app.get('/home-songs', async(req:Request, res:Response) => {
 
         const artistId = (await firestore.collection('artists').doc(songDetails.artist_id).get()).data()?.user_id
         const artistName = (await firestore.collection('userList').doc(artistId).get()).data()?.username
-        return {songId:songId, songName:songDetails.song_name, artistId:songDetails.artist_id, artistName:artistName, duration: songDetails.duration, isLiked}
+
+        const prefix = `songs/${songId}/`;
+
+        const [files] = await bucket.getFiles({ prefix });
+
+        let coverUrl;
+
+        for (const file of files) {
+          const [url] = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491',
+          });
+
+          const extension = file.name.split('.').pop()?.toLowerCase();
+          if (extension === 'png' || extension === 'jpg' || extension === 'jpeg'){
+            coverUrl = url
+          }
+        }
+
+        return {coverUrl, songId:songId, songName:songDetails.song_name, artistId:songDetails.artist_id, artistName:artistName, duration: songDetails.duration, isLiked}
       })
     )
 
@@ -503,10 +522,6 @@ app.get('/songCover/:songId', async (req, res) => {
 
     const [files] = await bucket.getFiles({ prefix });
 
-    if (!files || files.length === 0) {
-      return res.status(404).json({ error: 'Files not found' });
-    }
-
     let coverUrl;
 
     for (const file of files) {
@@ -680,7 +695,7 @@ app.get('/profile', async(req,res)=>{
           const profilePic = bucket.file(`user-profile/${userId}.${ext}`)
   
           try{
-            const file = await profilePic.getMetadata();
+            await profilePic.getMetadata();
             const [url] = await profilePic.getSignedUrl({
               action: 'read',
               expires: '03-09-2491',
@@ -795,7 +810,7 @@ app.post('/create/playlist',async(req,res)=>{
     
         const newId = createPlaylist.id
   
-        const addToLibrary = await firestore.collection('library-playlists').add({
+        await firestore.collection('library-playlists').add({
           playlist_id: newId,
           user_id: userId
         })
@@ -883,7 +898,7 @@ app.get('/playlists/:playlistId', async(req,res)=>{
             const userLiked = await firestore.collection('song-likes')
             .where('user_id', '==', userId)
             .where('song_id', '==', doc.data()?.song_id)
-            .get()            
+            .get()
 
             isLiked = !userLiked.empty
           }
@@ -963,7 +978,7 @@ app.post('/like/:songId', async(req,res)=>{
         res.status(200).send('Song already in favorites');
       } else {
   
-        const songLike = await firestore.collection('song-likes').add({
+        await firestore.collection('song-likes').add({
           song_id,
           user_id: userId
         });
@@ -1034,6 +1049,7 @@ app.post('/follow/:artistId', async(req,res)=>{
   }
 })
 
+
 //Unfollow artist
 app.delete('/follow/:artistId', async(req,res)=>{
   const artistId = req.params.artistId;
@@ -1063,6 +1079,120 @@ app.delete('/follow/:artistId', async(req,res)=>{
       res.status(500).send('Internal Server Error');
     }
   }
+})
+
+
+//Search
+app.get('/search/:query', async(req,res)=>{
+  let query = req.params.query;
+
+  query = query.charAt(0).toUpperCase() + query.slice(1)
+
+    try{
+      const searchResults = (await firestore.collection('songs')
+      .where('song_name', '>=', query)
+      .where('song_name', '<', query + '\uf8ff')
+      .get()).docs;
+      
+      const songs = await Promise.all(
+        searchResults.map(async(song)=>{
+          const id = song.id
+          const details = song.data()
+
+          const artistUserId = (await firestore.collection('artists').doc(details.artist_id).get()).data()?.user_id
+          const artistName = (await firestore.collection('userList').doc(artistUserId).get()).data()?.username
+
+          const prefix = `songs/${id}/`;
+          const [files] = await bucket.getFiles({ prefix });
+
+          let coverUrl;
+
+          for (const file of files) {
+            const [url] = await file.getSignedUrl({
+              action: 'read',
+              expires: '03-09-2491',
+            });
+
+            const extension = file.name.split('.').pop()?.toLowerCase();
+            if (extension === 'png' || extension === 'jpg' || extension === 'jpeg'){
+              coverUrl = url
+            }
+          }
+
+          return {songId: id, coverUrl, songName: details.song_name, duration: details.duration, artistName};
+        })
+      )
+
+      const artistSearch = (await firestore.collection('userList')
+      .where('username','>=', query)
+      .where('username', '<', query + '\uf8ff')
+      .get()).docs
+
+      const artists = await Promise.all(
+        artistSearch.map(async(user)=>{
+          const userId = user.id
+          const username = user.data().username
+
+          const artistPresent = await firestore.collection('artists')
+          .where('user_id', '==', userId)
+          .get()
+
+          if(!artistPresent.empty){
+            const artist = artistPresent.docs[0];
+            
+            const followers = (await firestore.collection('artist-followers')
+            .where('artist_id','==', artist.id)
+            .get()).size
+
+            const extensions = ['jpeg', 'png', 'jpg'];
+            let profileUrl = null;
+      
+            for (const ext of extensions) {
+              const profilePic = bucket.file(`user-profile/${userId}.${ext}`)
+      
+              try{
+                await profilePic.getMetadata();
+                const [url] = await profilePic.getSignedUrl({
+                  action: 'read',
+                  expires: '03-09-2491',
+                });
+                profileUrl = url
+                break;
+              } catch(err) {
+                continue
+              }
+            }
+
+            return {artistId: artist.id, artistName: username, followers, profileUrl}
+          }
+
+          return null
+        })
+      )
+
+      const filteredArtists = artists.filter(artist => artist !== null);
+
+      const playlistSearch = (await firestore.collection('playlists')
+      .where('playlist_name', '>=', query)
+      .where('playlist_name', '<', query + '\uf8ff')
+      .get()).docs
+
+      const playlists = await Promise.all(
+        playlistSearch.map(async(playlist)=>{
+
+          const trackCount = (await firestore.collection('playlist-songs')
+          .where('playlist_id','==',playlist.id)
+          .get()).size
+
+          return {playlistId: playlist.id, playlistName: playlist.data().playlist_name, trackCount}
+        })
+      )
+
+      res.status(200).send({songs, artists: filteredArtists, playlists})
+    } catch(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }
 })
 
 
@@ -1136,7 +1266,7 @@ app.post('/signup', async(req,res)=>{
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const userRef = await firestore.collection('userList').add({
+    await firestore.collection('userList').add({
       username,
       email,
       password: hashedPassword,
@@ -1147,10 +1277,6 @@ app.post('/signup', async(req,res)=>{
     console.log(err);
     res.status(500).send();
   }
-})
-
-app.get('/home', async(req, res)=>{
-  
 })
 
 

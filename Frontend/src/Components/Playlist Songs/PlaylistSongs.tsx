@@ -54,7 +54,7 @@ const PlaylistSongs = ({playlistDetails, setLikeTrigger, playlistPlay, removeFro
             <div className='relative'>
             <p className='p-[0.6rem] rounded-full hover:bg-[#80808040]' onClick={(event)=>toggleDropdown(index, event)}><IoMdMore className='text-[1.7rem]'/></p>
             { dropdown===index &&
-                <div className='w-[13rem] rounded-lg absolute left-[-13rem] top-0 bg-black overflow-hidden border-2 border-[#80808080]'>
+                <div className='w-[13rem] z-10 rounded-lg absolute left-[-13rem] top-0 bg-black overflow-hidden border-2 border-[#80808080]'>
                 {
                     songsDropDown.map((dropdownItem, keyIndex)=>{
                     return (
